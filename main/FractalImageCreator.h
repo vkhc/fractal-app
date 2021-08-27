@@ -7,11 +7,8 @@ using std::unique_ptr;
 
 class FractalImageCreator {
 public:
-    int width;
-    int height;
-
-    double x;
-    double y;
+    int screenWidth;
+    int screenHeight;
 
     double range = 1.0;
     double cX = -0.6;
@@ -27,12 +24,9 @@ public:
     FractalImageCreator(int w, int h);
     
     void calculateIterations(QImage& image);
-    void calculateIterations2(QImage& image);
-
-    void evalRange();
-
-    double screenToRealX(int x);
-    double screenToRealY(int y);
+    inline double screenToRealX(int x) {return cX - range * ratio + range * 2 * x / screenHeight;}
+    inline double screenToRealY(int y) {return cY - range + range * 2 * y / screenHeight;}
+    void setDrawArea(int tlx, int tly, int brx, int bry);
 
 
 

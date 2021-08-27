@@ -13,7 +13,7 @@ FractalWidget::FractalWidget(QWidget* parent) : QWidget(parent),
     setFixedSize(WIDTH, HEIGHT);
     resetTransparentLayer();
     selectionBrush = QBrush(QColor(100, 100, 255, 150), Qt::SolidPattern);
-    fractalCreator.calculateIterations2(image);
+    fractalCreator.calculateIterations(image);
     repaint();
 
     
@@ -30,10 +30,8 @@ void FractalWidget::paintEvent(QPaintEvent*) {
 
 void FractalWidget::mousePressEvent(QMouseEvent* e) {
     if (e->button() == Qt::RightButton) {
-        startX = e->position().x();
-        startY = e->position().y();
-        // fractalCreator.xStart = fractalCreator.screenToRealX(startX);
-        // fractalCreator.yStart = fractalCreator.screenToRealY(startY);
+        selectionStart = e->position().toPoint();
+
         mousePressed = true;
     }
 }
@@ -41,22 +39,12 @@ void FractalWidget::mousePressEvent(QMouseEvent* e) {
 void FractalWidget::mouseReleaseEvent(QMouseEvent* e) {
     if (e->button() == Qt::RightButton && mousePressed) {
         mousePressed = false;
-        lastX = e->position().x();
-        lastY = e->position().y();
-        double sx = fractalCreator.screenToRealX(startX);
-        double ex = fractalCreator.screenToRealX(lastX);
-        double sy = fractalCreator.screenToRealY(startY);
-        double ey = fractalCreator.screenToRealY(lastY);
-        double r = (ey - sy)/2;
-        double x = (ex + sx) /2;
-        double y = (ey + sy) /2;
-        fractalCreator.range = std::abs(r);
-        fractalCreator.cX = x;
-        fractalCreator.cY = y;
+        selectionEnd = e->position().toPoint();
+        fractalCreator.setDrawArea(selectionStart.x(), selectionStart.y(),
+                                   selectionEnd.x(), selectionEnd.y());
         
-        // fractalCreator.xEnd = fractalCreator.screenToRealX(lastX);
-        // fractalCreator.yEnd = fractalCreator.screenToRealY(lastY);
-        fractalCreator.calculateIterations2(image);
+
+        fractalCreator.calculateIterations(image);
         resetTransparentLayer();
         repaint();
     }
@@ -64,8 +52,7 @@ void FractalWidget::mouseReleaseEvent(QMouseEvent* e) {
 
 void FractalWidget::mouseMoveEvent(QMouseEvent* e) {
     if ((e->buttons() & Qt::RightButton) && mousePressed) {
-        lastX = e->position().x();
-        lastY = e->position().y();
+        selectionEnd = e->position().toPoint();
         drawSelection();
     } 
 }
@@ -73,7 +60,7 @@ void FractalWidget::mouseMoveEvent(QMouseEvent* e) {
 void FractalWidget::drawSelection() {
     resetTransparentLayer();
     QPainter painter(&transparentLayer);
-    painter.fillRect(startX, startY, lastX - startX, lastY - startY, selectionBrush);
+    painter.fillRect(QRect(selectionStart, selectionEnd), selectionBrush);
     update();
 }
 

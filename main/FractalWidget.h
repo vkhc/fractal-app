@@ -29,10 +29,11 @@ private:
     FractalImageCreator fractalCreator;
 
     bool mousePressed = false;
-    int startX = 0, startY = 0, lastX = 800, lastY = 600;
 
-    QImage image; // Fractal is drawn here
+    QImage image;            // Fractal is drawn here
     QImage transparentLayer; // Transparent layer to draw
                              // selection rectange
+    QPoint selectionStart;
+    QPoint selectionEnd;
     QBrush selectionBrush;   // Brush for selection rectangle
 };
