@@ -1,0 +1,6 @@
+# Ignore contents of build folder
+build/*
+!build/.gitkeep
+
+# Ignore VSCode config folder
+.vscode
