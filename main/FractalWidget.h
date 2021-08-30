@@ -23,6 +23,7 @@ protected:
 private:
     void drawSelection();
     void resetTransparentLayer();
+    void displayCalcTime(QPainter& p);
 
     const int WIDTH = 800;  // Order matters!
     const int HEIGHT = 600; // Initialize scrren size before FractalImageCreator

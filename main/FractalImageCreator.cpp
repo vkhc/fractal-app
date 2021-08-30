@@ -38,29 +38,27 @@ void FractalImageCreator::calculateIterations(QImage& image) {
 }
 
 void FractalImageCreator::calculateIterationsThread(QImage& image) {
-    start_time = std::chrono::steady_clock::now();
-    int nThreads = std::thread::hardware_concurrency();
+    startTimer();
 
-    std::thread t[nThreads];
+    int nThreads = std::thread::hardware_concurrency();     // Get max thread number
+    std::thread t[nThreads];                                // Initialize thread array
     int width = screenWidth / nThreads;
     int start = 0;
     int end = width;
     for (int i=0; i<nThreads; ++i) {
-
+        // Pass member function to each thread
         t[i] = std::thread(&FractalImageCreator::iterationsInRange, this, std::ref(image), start, end);
-        // iterationsInRange(image, start, end);
-        std::cout << start << " - " << end << std::endl;
         start += width;
-        end += width;
-        
+        end += width;    
     }
 
+    // Join all threads with main
     for (int i=0; i<nThreads;  ++i) t[i].join();
 
-
-    elapsed_time = std::chrono::steady_clock::now() - start_time;
+    stopTimer();
 }
 
+//Calculate iterations and draw pixels in screen column from "start" to "end"
 void FractalImageCreator::iterationsInRange(QImage& image, int start, int end) {
     for (int i=start; i<end; ++i) {
         for (int j=0; j<screenHeight; ++j) {

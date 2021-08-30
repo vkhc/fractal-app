@@ -26,13 +26,7 @@ void FractalWidget::paintEvent(QPaintEvent*) {
     qp.drawImage(0, 0, image);
     qp.drawImage(0, 0, transparentLayer);
 
-    // Display fractal generation time
-    QFont font = qp.font();
-    font.setPixelSize(48);
-    qp.setFont(font);
-    qp.setPen(Qt::white);
-    qp.drawText(5,50, QString::number(fractalCreator.elapsed_time.count()));
-
+    displayCalcTime(qp);
 }
 
 void FractalWidget::mousePressEvent(QMouseEvent* e) {
@@ -73,4 +67,13 @@ void FractalWidget::drawSelection() {
 
 void FractalWidget::resetTransparentLayer() {
     transparentLayer.fill(QColor(0,0,0,0));
+}
+
+void FractalWidget::displayCalcTime(QPainter& p) {
+    // Display fractal generation time
+    QFont font = p.font();
+    font.setPixelSize(36);
+    p.setFont(font);
+    p.setPen(Qt::white);
+    p.drawText(4,40, QString::number(fractalCreator.getElapsedTime()));
 }
