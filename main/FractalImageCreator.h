@@ -6,10 +6,17 @@
 
 using std::unique_ptr;
 
+struct RGB {
+    uint8_t R;
+    uint8_t G;
+    uint8_t B;
+};
+
 class FractalImageCreator {
 private:
     int screenWidth;
     int screenHeight;
+    int nIterations = 1000;
 
     double range = 1.0;
     double cX = -0.6;
@@ -18,8 +25,9 @@ private:
 
     
 
-    unique_ptr<int[]> nIterations;
+    unique_ptr<int[]> IterationsBuffer;
     unique_ptr<uint32_t[]> imgBuffer;
+    unique_ptr<RGB[]> colorPalete;
 
 public:
     FractalImageCreator(int w, int h);
