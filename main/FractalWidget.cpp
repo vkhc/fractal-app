@@ -30,16 +30,18 @@ void FractalWidget::paintEvent(QPaintEvent*) {
 }
 
 void FractalWidget::mousePressEvent(QMouseEvent* e) {
+    mousePressed = true;
+    QPoint position = e->position().toPoint();
     if (e->button() == Qt::RightButton) {
-        selectionStart = e->position().toPoint();
-
-        mousePressed = true;
+        selectionStart = position;
+    }
+    if (e->button() == Qt::LeftButton) {
+        mouseDragPos = position;
     }
 }
 
 void FractalWidget::mouseReleaseEvent(QMouseEvent* e) {
     if (e->button() == Qt::RightButton && mousePressed) {
-        mousePressed = false;
         selectionEnd = e->position().toPoint();
         fractalCreator.setDrawingArea(selectionStart.x(), selectionStart.y(),
                                    selectionEnd.x(), selectionEnd.y());
@@ -48,24 +50,34 @@ void FractalWidget::mouseReleaseEvent(QMouseEvent* e) {
         resetTransparentLayer();
         repaint();
     }
+    mousePressed = false;
 }
 
-void FractalWidget::wheelEvent(QWheelEvent* e) {
-    QPoint numDegrees = e->angleDelta() / 8;
-    QPoint mousePos = e->position().toPoint();
-    float factor = 0.8f;
-    if (numDegrees.y() < 0) factor = 1.f / factor;
-    fractalCreator.adjustRange(factor);
-    fractalCreator.setImageCenter(mousePos.x(), mousePos.y());
-    fractalCreator.calculateIterationsThread(image);
-    repaint();
-}
 
 void FractalWidget::mouseMoveEvent(QMouseEvent* e) {
     if ((e->buttons() & Qt::RightButton) && mousePressed) {
         selectionEnd = e->position().toPoint();
         drawSelection();
-    } 
+    }
+    if ((e->buttons() & Qt::LeftButton) && mousePressed) {
+        QPoint diff = mouseDragPos - e->position().toPoint();
+        mouseDragPos = e->position().toPoint(); // Update position
+        fractalCreator.moveImageCenter(diff.x(), diff.y());
+        fractalCreator.calculateIterationsThread(image);
+        repaint(); 
+    }
+
+}
+
+void FractalWidget::wheelEvent(QWheelEvent* e) {
+    QPoint numDegrees = e->angleDelta() / 8;
+    QPoint d = e->position().toPoint() - QPoint(WIDTH/2, HEIGHT/2);
+    float factor = 0.8f;
+    if (numDegrees.y() < 0) factor = 1.f / factor;
+    fractalCreator.adjustRange(factor);
+    fractalCreator.moveImageCenter(d.x(), d.y());
+    fractalCreator.calculateIterationsThread(image);
+    repaint();
 }
 
 void FractalWidget::drawSelection() {

@@ -109,6 +109,11 @@ void FractalImageCreator::setImageCenter(int x, int y) {
     cY = screenToRealY(y);
 }
 
+void FractalImageCreator::moveImageCenter(int dx, int dy) {
+    double moveSize = range / 200;
+    cX += moveSize * dx;
+    cY += moveSize * dy;
+}
 
 
 

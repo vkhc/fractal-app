@@ -37,5 +37,6 @@ private:
                              // selection rectange
     QPoint selectionStart;
     QPoint selectionEnd;
+    QPoint mouseDragPos;
     QBrush selectionBrush;   // Brush for selection rectangle
 };
