@@ -44,11 +44,21 @@ void FractalWidget::mouseReleaseEvent(QMouseEvent* e) {
         fractalCreator.setDrawingArea(selectionStart.x(), selectionStart.y(),
                                    selectionEnd.x(), selectionEnd.y());
         
-
         fractalCreator.calculateIterationsThread(image);
         resetTransparentLayer();
         repaint();
     }
+}
+
+void FractalWidget::wheelEvent(QWheelEvent* e) {
+    QPoint numDegrees = e->angleDelta() / 8;
+    QPoint mousePos = e->position().toPoint();
+    float factor = 0.8f;
+    if (numDegrees.y() < 0) factor = 1.f / factor;
+    fractalCreator.adjustRange(factor);
+    fractalCreator.setImageCenter(mousePos.x(), mousePos.y());
+    fractalCreator.calculateIterationsThread(image);
+    repaint();
 }
 
 void FractalWidget::mouseMoveEvent(QMouseEvent* e) {
