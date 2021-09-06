@@ -71,11 +71,12 @@ void FractalWidget::mouseMoveEvent(QMouseEvent* e) {
 
 void FractalWidget::wheelEvent(QWheelEvent* e) {
     QPoint numDegrees = e->angleDelta() / 8;
-    QPoint d = e->position().toPoint() - QPoint(WIDTH/2, HEIGHT/2);
+    QPoint d = e->position().toPoint() - QPoint(WIDTH/2 , HEIGHT/2);
     float factor = 0.8f;
     if (numDegrees.y() < 0) factor = 1.f / factor;
+    float m = (1-factor) / factor;
     fractalCreator.adjustRange(factor);
-    fractalCreator.moveImageCenter(d.x(), d.y());
+    fractalCreator.moveImageCenter(m * d.x(), m * d.y());
     fractalCreator.calculateIterationsThread(image);
     repaint();
 }
