@@ -1,5 +1,6 @@
 #include "FractalImageCreator.h"
 #include "Mandelbrot.h"
+
 #include <iostream>
 #include <cmath>
 #include <thread>
@@ -7,42 +8,24 @@
 
 
 FractalImageCreator::FractalImageCreator(int w, int h) : screenWidth(w), screenHeight(h),
-                                                         colorPalete(new RGB[nIterations + 1]{}),
+                                                         palette(nIterations),
                                                          IterationsBuffer(new int[screenWidth * screenHeight + 1]{}),
                                                          imgBuffer(new uint32_t[screenWidth * screenHeight +1]{}) {
 
     if (screenHeight > screenWidth) std::swap(screenWidth, screenHeight);
     ratio = (double)screenWidth / screenHeight;
-    initColorPalete();
+
+    vector<pair<float, RGB>> colors;
+    colors.emplace_back(pair<float, RGB>(0.0f, {100, 7, 0}));
+    colors.emplace_back(pair<float, RGB>(0.025f, {66, 107, 203}));
+    colors.emplace_back(pair<float, RGB>(0.22f, {37, 255, 255}));
+    colors.emplace_back(pair<float, RGB>(0.6425f, {255, 170, 0}));
+    colors.emplace_back(pair<float, RGB>(0.8575f, {0, 2, 0}));
+    colors.emplace_back(pair<float, RGB>(1.0f, {100, 7, 0}));
+    palette.init(colors);
+
 }
 
-void FractalImageCreator::initColorPalete() {
-    float p0 = 0.0f, p1 = 0.025f, p2 = 0.22f, p3 = 0.6425f, p4 = 0.8575f, p5 = 1.0f;
-    RGB col00 = {100, 7, 0};        // Colors defining
-    RGB col1 = {66, 107, 203};     // palete
-    RGB col2 = {37, 255, 255};
-    RGB col3 = {255, 170, 0};
-    RGB col4 = {0, 2, 0};
-    RGB col;    // Color to push into palete array
-
-    for (int i=0; i<nIterations; ++i) {
-        float t = (float)i / nIterations;
-
-        if (t <= p1) {
-            col = RGB::interpolate(col00, col1, p0, p1, t);
-        } else if (t > p1 && t <= p2) {
-            col = RGB::interpolate(col1, col2, p1, p2, t);
-        } else if (t > p2 && t <= p3) {
-            col = RGB::interpolate(col2, col3, p2, p3, t);
-        } else if (t > p3 && t <= p4) {
-            col = RGB::interpolate(col3, col4, p3, p4, t);
-        } else if (t <= p5) {
-            col = RGB::interpolate(col4, col00, p4, p5, t);
-        } else col = {0,0,0};
-
-        colorPalete[i] = col;
-    }
-}
 
 void FractalImageCreator::calculateIterationsThread(QImage& image) {
     startTimer();
@@ -79,8 +62,8 @@ void FractalImageCreator::iterationsInRange(QImage& image, int start, int range)
                 double nu = log(mod / log(2)) / log(2);
                 double nIt = iterations + 1 - nu;
 
-                RGB col1 = colorPalete[nIt];
-                RGB col2 = colorPalete[nIt+1];
+                RGB col1 = palette[nIt]; //colorPalete[nIt];
+                RGB col2 = palette[nIt+1]; //colorPalete[nIt+1];
                 RGB col = RGB::interpolate(col1, col2, 0.0f, 1.0f, fmod(nIt, 1.0));
 
                 value = qRgb( col.R, col.G, col.B );
@@ -117,10 +100,3 @@ void FractalImageCreator::moveImageCenter(int dx, int dy) {
 
 
 
- RGB RGB::interpolate(RGB& low, RGB& high, float lpos, float hpos, float t) {
-    float i = (t - lpos) / (hpos - lpos);
-    RGB result = {(high.R - low.R)*i + low.R,
-                  (high.G - low.G)*i + low.G,
-                  (high.B - low.B)*i + low.B};
-    return result;
-}

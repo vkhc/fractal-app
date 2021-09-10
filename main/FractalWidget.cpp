@@ -69,7 +69,7 @@ void FractalWidget::mouseMoveEvent(QMouseEvent* e) {
 void FractalWidget::wheelEvent(QWheelEvent* e) {
     QPoint numDegrees = e->angleDelta() / 8;
     QPoint d = e->position().toPoint() - QPoint(WIDTH/2 , HEIGHT/2);
-    std::cout << d.x() << std::endl;
+
     float factor = 0.8f;
     if (numDegrees.y() < 0) factor = 1.f / factor;
     fractalCreator.adjustRange(factor);

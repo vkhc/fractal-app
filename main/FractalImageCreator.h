@@ -4,15 +4,11 @@
 #include <chrono>
 #include <QImage>
 
+#include "ColorPalette.h"
+
 using std::unique_ptr;
 
-struct RGB {
-    uint8_t R;
-    uint8_t G;
-    uint8_t B;
 
-    static RGB interpolate(RGB& low, RGB& high, float lpos, float hpos, float t);
-};
 
 class FractalImageCreator {
 private:
@@ -27,11 +23,11 @@ private:
 
     unique_ptr<int[]> IterationsBuffer;
     unique_ptr<uint32_t[]> imgBuffer;
-    unique_ptr<RGB[]> colorPalete;
+
+    ColorPalette palette;
 
 public:
     FractalImageCreator(int w, int h);
-    void initColorPalete();
     
     void calculateIterationsThread(QImage& image);
     void iterationsInRange(QImage& image, int start, int end);
