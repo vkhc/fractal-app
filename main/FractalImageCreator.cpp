@@ -28,7 +28,6 @@ FractalImageCreator::FractalImageCreator(int w, int h) : screenWidth(w), screenH
     palette.init(colors);
 }
 
-
 void FractalImageCreator::calculateIterationsThread(QImage& image) {
     startTimer();
 
@@ -48,9 +47,8 @@ void FractalImageCreator::calculateIterationsThread(QImage& image) {
     stopTimer();
 }
 
-//Calculate iterations and draw pixels in screen column
+//Calculate iterations and draw pixels in a screen column
 void FractalImageCreator::iterationsInRange(QImage& image, int start, int range) {
-    int ct = 0;
     for (int i=start; i<start+range; ++i) {
         for (int j=0; j<screenHeight; ++j) {
             double x = screenToRealX(i);
@@ -64,8 +62,8 @@ void FractalImageCreator::iterationsInRange(QImage& image, int start, int range)
                 double nu = log(mod / log(2)) / log(2);
                 double nIt = iterations + 1 - nu;
 
-                RGB col1 = palette[nIt]; //colorPalete[nIt];
-                RGB col2 = palette[nIt+1]; //colorPalete[nIt+1];
+                RGB col1 = palette[nIt]; 
+                RGB col2 = palette[nIt+1]; 
                 RGB col = RGB::interpolate(col1, col2, 0.0f, 1.0f, fmod(nIt, 1.0));
 
                 value = qRgb( col.R, col.G, col.B );
