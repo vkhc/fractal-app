@@ -15,15 +15,17 @@ FractalImageCreator::FractalImageCreator(int w, int h) : screenWidth(w), screenH
     if (screenHeight > screenWidth) std::swap(screenWidth, screenHeight);
     ratio = (double)screenWidth / screenHeight;
 
+    // Define colors for palete
     vector<pair<float, RGB>> colors;
-    colors.emplace_back(pair<float, RGB>(0.0f, {100, 7, 0}));
-    colors.emplace_back(pair<float, RGB>(0.025f, {66, 107, 203}));
-    colors.emplace_back(pair<float, RGB>(0.22f, {37, 255, 255}));
+    // First color position must always be 0, last position - 1.
+    colors.emplace_back(pair<float, RGB>(0.0f, {255, 170,   0}));
+    colors.emplace_back(pair<float, RGB>(0.035f, {0, 7, 100}));//
+    colors.emplace_back(pair<float, RGB>(0.16f, {32, 107, 203}));
+    colors.emplace_back(pair<float, RGB>(0.42f, {237, 255, 255}));
     colors.emplace_back(pair<float, RGB>(0.6425f, {255, 170, 0}));
     colors.emplace_back(pair<float, RGB>(0.8575f, {0, 2, 0}));
     colors.emplace_back(pair<float, RGB>(1.0f, {100, 7, 0}));
     palette.init(colors);
-
 }
 
 
