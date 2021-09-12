@@ -9,10 +9,11 @@
 class FractalWidget : public QWidget {
     Q_OBJECT
 public:
-    
-
 
     FractalWidget(QWidget* parent = nullptr);
+    double currentXCoord = 0.0;
+    double currentYCoord = 0.0;
+    double lastFrameTime = 0.0;
 
 protected:
     void paintEvent(QPaintEvent*) override;
@@ -24,6 +25,7 @@ protected:
 private:
     void drawSelection();
     void resetTransparentLayer();
+    void updateFractal();
     void displayCalcTime(QPainter& p);
 
     const int WIDTH = 800;  // Order matters!
@@ -33,8 +35,7 @@ private:
     bool mousePressed = false;
 
     QImage image;            // Fractal is drawn here
-    QImage transparentLayer; // Transparent layer to draw
-                             // selection rectange
+    QImage transparentLayer; // Transparent layer to draw selection rectange
     QPoint selectionStart;
     QPoint selectionEnd;
     QPoint mouseDragPos;

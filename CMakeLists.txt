@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.12)
 
 set (PROJECT fractal)
 
@@ -10,13 +10,13 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(MAIN "${PROJECT}_app")
 
 # Set path to qt6
-set(QT_CONFIG_PATH "/home/vk/Qt/6.1.1/gcc_64/lib/cmake")
+#set(QT_CONFIG_PATH "/home/vk/Qt/6.1.1/gcc_64/lib/cmake")
 list(APPEND CMAKE_PREFIX_PATH ${QT_CONFIG_PATH})
 
 # Find required Qt libraries

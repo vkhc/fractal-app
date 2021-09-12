@@ -5,6 +5,7 @@
 #include <QImage>
 
 #include "ColorPalette.h"
+#include "Timer.h"
 
 using std::unique_ptr;
 
@@ -26,6 +27,8 @@ private:
 
     ColorPalette palette;
 
+    Timer timer;
+
 public:
     FractalImageCreator(int w, int h);
     
@@ -35,22 +38,8 @@ public:
     inline void adjustRange(float factor) { range *= factor; }
     void setImageCenter(int x, int y);
     void moveImageCenter(int x, int y);
-
-
-private:
-    inline double screenToRealX(int x) { return cX - range * ratio + range * 2 * x / screenHeight; }
-    inline double screenToRealY(int y) { return cY - range + range * 2 * y / screenHeight; }
-    
-    
-// For calculating time of fractal generation
-// Move to separate class. Single responsibility principle
-public:
-    inline double getElapsedTime() { return elapsed_time.count(); }
-private:    
-    std::chrono::time_point<std::chrono::steady_clock> start_time = std::chrono::steady_clock::now();
-    std::chrono::duration<double> elapsed_time = std::chrono::duration<double>::zero();
-    inline void startTimer() { start_time = std::chrono::steady_clock::now(); }
-    inline void stopTimer() { elapsed_time = std::chrono::steady_clock::now() - start_time; }
-
+    inline const double screenToRealX(int x) const { return cX - range * ratio + range * 2 * x / screenHeight; }
+    inline const double screenToRealY(int y) const { return cY - range + range * 2 * y / screenHeight; }
+    double frameCalcTime = 0.0;
 };
 
