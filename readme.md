@@ -11,7 +11,7 @@ it can be quite laggy on lower end CPUs. Neverthless, pretty convenient way to e
 
 ## Features
 Image can be dragged using mouse movement with left button clicked.
-Zoom in and out using Mouse wheel
+Zoom in and out using Mouse wheel.
 Zoom into selected area using mouse with right button clicked.
 
 will add high resolution image export feature sometime.
