@@ -13,7 +13,7 @@ FractalWidget::FractalWidget(QWidget* parent) : QWidget(parent),
     setFixedSize(WIDTH, HEIGHT);
     resetTransparentLayer();
     selectionBrush = QBrush(QColor(100, 100, 255, 150), Qt::SolidPattern);
-    updateFractal();
+    redrawFractal();
 }
 
 void FractalWidget::paintEvent(QPaintEvent*) {
@@ -38,11 +38,18 @@ void FractalWidget::mousePressEvent(QMouseEvent* e) {
 void FractalWidget::mouseReleaseEvent(QMouseEvent* e) {
     if (e->button() == Qt::RightButton && mousePressed) {
         selectionEnd = e->position().toPoint();
+        QPoint diff = selectionEnd - selectionStart;
+        if (std::abs(diff.x()) < 5 || std::abs(diff.y()) < 5) { // Dont zoom into very small area
+            resetTransparentLayer();
+            repaint();
+            mousePressed = false;
+            return;
+        }
         fractalCreator.setDrawingArea(selectionStart.x(), selectionStart.y(),
                                    selectionEnd.x(), selectionEnd.y());
         
         resetTransparentLayer();
-        updateFractal();
+        redrawFractal();
     }
     mousePressed = false;
 }
@@ -59,7 +66,7 @@ void FractalWidget::mouseMoveEvent(QMouseEvent* e) {
         QPoint diff = mouseDragPos - currentMouseLoc;
         mouseDragPos = currentMouseLoc; // Update position
         fractalCreator.moveImageCenter(diff.x(), diff.y());
-        updateFractal();
+        redrawFractal();
     }
 }
 
@@ -72,7 +79,7 @@ void FractalWidget::wheelEvent(QWheelEvent* e) {
     fractalCreator.adjustRange(factor);
     float m = (1-factor) / factor;
     fractalCreator.moveImageCenter(m * d.x(), m * d.y());
-    updateFractal();
+    redrawFractal();
 }
 
 void FractalWidget::drawSelection() {
@@ -86,7 +93,7 @@ void FractalWidget::resetTransparentLayer() {
     transparentLayer.fill(QColor(0,0,0,0));
 }
 
-void FractalWidget::updateFractal() {
+void FractalWidget::redrawFractal() {
     fractalCreator.calculateIterationsThread(image);
     lastFrameTime = fractalCreator.frameCalcTime;
     repaint();

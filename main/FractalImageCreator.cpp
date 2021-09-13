@@ -18,8 +18,9 @@ FractalImageCreator::FractalImageCreator(int w, int h) : screenWidth(w), screenH
     // Define colors for palete
     vector<pair<float, RGB>> colors;
     // First color position must always be 0, last position - 1.
-    colors.emplace_back(pair<float, RGB>(0.0f, {255, 170,   0}));
-    colors.emplace_back(pair<float, RGB>(0.035f, {0, 7, 100}));//
+    // colors.emplace_back(pair<float, RGB>(0.0f, {255, 170, 0}));
+    colors.emplace_back(pair<float, RGB>(0.0f, {0, 7, 100}));// 0, 7, 100
+    colors.emplace_back(pair<float, RGB>(0.035f, {255, 170, 0}));//
     colors.emplace_back(pair<float, RGB>(0.16f, {32, 107, 203}));
     colors.emplace_back(pair<float, RGB>(0.42f, {237, 255, 255}));
     colors.emplace_back(pair<float, RGB>(0.6425f, {255, 170, 0}));
@@ -55,7 +56,7 @@ void FractalImageCreator::iterationsInRange(QImage& image, int start, int range)
             double y = screenToRealY(j);
             double zR, zI;
             int iterations = Mandelbrot::getIterations(x,y, zR, zI, nIterations);
-            IterationsBuffer[j * screenWidth + i] = iterations;
+            // IterationsBuffer[j * screenWidth + i] = iterations;
             QRgb value;    
             if (iterations < 1000) {
                 double mod = log(zR + zI) / 2;

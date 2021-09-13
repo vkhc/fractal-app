@@ -25,7 +25,7 @@ protected:
 private:
     void drawSelection();
     void resetTransparentLayer();
-    void updateFractal();
+    void redrawFractal();
     void displayCalcTime(QPainter& p);
 
     const int WIDTH = 800;  // Order matters!

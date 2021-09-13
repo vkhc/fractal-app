@@ -11,7 +11,7 @@ MainWindow::MainWindow(): w(new FractalWidget) {
 
     auto threadInfo = new QLabel(this);
     int nThreads = std::thread::hardware_concurrency();
-    QString text = QString("%1 Threads available").arg(nThreads);
+    QString text = QString("%1 Threads available ").arg(nThreads);
     threadInfo->setAlignment(Qt::AlignRight);
     threadInfo->setText(text);
     
@@ -23,8 +23,8 @@ MainWindow::MainWindow(): w(new FractalWidget) {
     fractalGenerationTime->setAlignment(Qt::AlignRight);
     fractalGenerationTime->setText(temp);
 
-    statusBar()->addWidget(mousePosX, 5);
-    statusBar()->addWidget(mousePosY, 5);
+    statusBar()->addWidget(mousePosX, 4);
+    statusBar()->addWidget(mousePosY, 4);
     statusBar()->addWidget(threadInfo, 5);
     statusBar()->addWidget(fractalGenerationTime, 6);
 }
@@ -37,7 +37,7 @@ bool MainWindow::eventFilter(QObject* object, QEvent* event) {
         temp = QString("Y=%1").arg(QString::number(w->currentYCoord,'g', 16));
         mousePosY->setText(temp);
     } if (event->type() == QEvent::Paint) {
-        QString temp = QString("Image generated in %1 s").arg(w->lastFrameTime);
+        QString temp = QString("Image generated in %1 s ").arg(w->lastFrameTime);
         fractalGenerationTime->setText(temp);
     }
     return false;
