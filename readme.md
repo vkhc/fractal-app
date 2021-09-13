@@ -2,10 +2,10 @@
 Multithreaded application for rendering Mandelbrot set. Since application computation heavy,
 it can be quite laggy on lower end CPUs. Neverthless, pretty convenient way to explore fractal.
 
-![Screenshot 0](https://github.com/vkhc/fractal-app/blob/master/screenshots/scrX.PNG)
-![Screenshot 1](https://github.com/vkhc/fractal-app/blob/master/screenshots/scr1.PNG)
-![Screenshot 2](https://github.com/vkhc/fractal-app/blob/master/screenshots/scr2.PNG)
-![Screenshot 3](https://github.com/vkhc/fractal-app/blob/master/screenshots/scr3.PNG)
+![Screenshot 0](https://github.com/vkhc/fractal-app/blob/master/screenshots/scrX.png)
+![Screenshot 1](https://github.com/vkhc/fractal-app/blob/master/screenshots/scr1.png)
+![Screenshot 2](https://github.com/vkhc/fractal-app/blob/master/screenshots/scr2.png)
+![Screenshot 3](https://github.com/vkhc/fractal-app/blob/master/screenshots/scr3.png)
 
 
 
