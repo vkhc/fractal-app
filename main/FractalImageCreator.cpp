@@ -33,7 +33,7 @@ void FractalImageCreator::calculateIterationsThread(QImage& image) {
     timer.startTimer();
 
     int nThreads = std::thread::hardware_concurrency();     // Get max thread number
-    std::thread t[nThreads];                                // Initialize thread array
+    std::vector<std::thread> t(nThreads);                   // Initialize thread array
     int width = screenWidth / nThreads;
     int start = 0;
     for (int i=0; i<nThreads; ++i) {
