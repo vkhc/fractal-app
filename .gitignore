@@ -2,5 +2,7 @@
 build/*
 !build/.gitkeep
 
-# Ignore VSCode config folder
+# Ignore
 .vscode
+.vs
+out/
