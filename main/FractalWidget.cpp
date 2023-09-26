@@ -17,11 +17,11 @@ FractalWidget::FractalWidget(QWidget* parent) : QWidget(parent),
 }
 
 void FractalWidget::paintEvent(QPaintEvent*) {
-    QPainter qp(this);
-    qp.setRenderHint(QPainter::SmoothPixmapTransform);
-    qp.setRenderHint(QPainter::Antialiasing);
-    qp.drawImage(0, 0, image);
-    qp.drawImage(0, 0, transparentLayer);
+	QPainter p(this);
+	p.setRenderHint(QPainter::SmoothPixmapTransform);
+	p.setRenderHint(QPainter::Antialiasing);
+	p.drawImage(0, 0, image);
+	p.drawImage(0, 0, transparentLayer);
 }
 
 void FractalWidget::mousePressEvent(QMouseEvent* e) {

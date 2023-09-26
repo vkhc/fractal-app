@@ -7,13 +7,9 @@
 
 
 
-FractalImageCreator::FractalImageCreator(int w, int h) : screenWidth(w), screenHeight(h),
-                                                         palette(nIterations),
-                                                         IterationsBuffer(new int[screenWidth * screenHeight + 1]{}),
-                                                         imgBuffer(new uint32_t[screenWidth * screenHeight +1]{}) {
-
-    if (screenHeight > screenWidth) std::swap(screenWidth, screenHeight);
-    ratio = (double)screenWidth / screenHeight;
+FractalImageCreator::FractalImageCreator(int w, int h) : m_width(w), m_height(h), palette(nIterations)
+{
+	if (m_height > m_width) std::swap(m_width, m_height);
 
     // Define colors for palete
     vector<pair<float, RGB>> colors;
@@ -26,7 +22,45 @@ FractalImageCreator::FractalImageCreator(int w, int h) : screenWidth(w), screenH
     colors.emplace_back(pair<float, RGB>(0.6425f, {255, 170, 0}));
     colors.emplace_back(pair<float, RGB>(0.8575f, {0, 2, 0}));
     colors.emplace_back(pair<float, RGB>(1.0f, {100, 7, 0}));
-    palette.init(colors);
+	palette.init(colors);
+}
+
+QImage FractalImageCreator::createImage(double fromX, double fromY, double toX, double toY, QSize imageSize)
+{
+	assert((fromX < toX && fromY < toY) && "invalid coordinate order");
+
+	QImage image(imageSize, QImage::Format_RGB32);
+
+	double xIncrement = (toX - fromX) / imageSize.width();
+	double yIncrement = (toY - fromY) / imageSize.height();
+
+	for (int i = 0; i < imageSize.width(); ++i) {
+			double x = fromX + xIncrement * i;
+		for (int j = 0; j < imageSize.height(); ++j) {
+			double y = fromY + yIncrement * j;
+
+			double zR, zI;
+			int iterations = Mandelbrot::getIterations(x,y, zR, zI, nIterations);
+			QRgb value;
+			if (iterations < 1000) {
+				double mod = log(zR + zI) / 2;
+				double nu = log(mod / log(2)) / log(2);
+				double nIt = iterations + 1 - nu;
+
+				RGB col1 = palette[nIt];
+				RGB col2 = palette[nIt+1];
+				RGB col = RGB::interpolate(col1, col2, 0.0f, 1.0f, fmod(nIt, 1.0));
+
+				value = qRgb( col.R, col.G, col.B );
+
+			} else
+				value = qRgb(0,0,0);
+
+			image.setPixel(i, j, value);
+		}
+	}
+
+	return image;
 }
 
 void FractalImageCreator::calculateIterationsThread(QImage& image) {
@@ -34,7 +68,7 @@ void FractalImageCreator::calculateIterationsThread(QImage& image) {
 
     int nThreads = std::thread::hardware_concurrency();     // Get max thread number
     std::vector<std::thread> t(nThreads);                   // Initialize thread array
-    int width = screenWidth / nThreads;
+	int width = m_width / nThreads;
     int start = 0;
     for (int i=0; i<nThreads; ++i) {
         // Pass member function to each thread
@@ -51,12 +85,11 @@ void FractalImageCreator::calculateIterationsThread(QImage& image) {
 //Calculate iterations and draw pixels in a screen column
 void FractalImageCreator::iterationsInRange(QImage& image, int start, int range) {
     for (int i=start; i<start+range; ++i) {
-        for (int j=0; j<screenHeight; ++j) {
+		for (int j=0; j<m_height; ++j) {
             double x = screenToRealX(i);
             double y = screenToRealY(j);
             double zR, zI;
             int iterations = Mandelbrot::getIterations(x,y, zR, zI, nIterations);
-            // IterationsBuffer[j * screenWidth + i] = iterations;
             QRgb value;    
             if (iterations < 1000) {
                 double mod = log(zR + zI) / 2;
@@ -94,7 +127,7 @@ void FractalImageCreator::setImageCenter(int x, int y) {
 }
 
 void FractalImageCreator::moveImageCenter(int dx, int dy) {
-    double moveSize = range /(screenHeight/2);
+	double moveSize = range /(m_height/2);
     cX += moveSize * dx;
     cY += moveSize * dy;
 }
