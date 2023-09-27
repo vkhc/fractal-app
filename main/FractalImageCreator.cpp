@@ -119,5 +119,3 @@ void FractalImageCreator::fillImage(QImage& image, int start, int width, double 
 		}
 	}
 }
-
-

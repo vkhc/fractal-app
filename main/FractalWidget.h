@@ -35,10 +35,7 @@ private:
 private:
 	FractalImageCreator fractalCreator;
 
-	bool leftButtonClicked = false;
-	bool rightButtonClicked = false;
-
 	QImage image;
 	QRect selection;
-    QPoint mouseDragPos;
+	QPoint dragStartPos;
 };

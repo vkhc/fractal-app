@@ -61,8 +61,7 @@ void FractalWidget::paintEvent(QPaintEvent*)
 	p.setRenderHint(QPainter::Antialiasing);
 	p.drawImage(rect(), image);
 
-	if (rightButtonClicked)
-		drawSelection(p);
+	drawSelection(p);
 
 }
 
@@ -70,55 +69,48 @@ void FractalWidget::mousePressEvent(QMouseEvent* e)
 {
 	if (e->button() == Qt::RightButton)
 	{
-		rightButtonClicked = true;
 		selection.setTopLeft(e->position().toPoint());
     }
 	if (e->button() == Qt::LeftButton)
 	{
-		leftButtonClicked = true;
-		mouseDragPos = e->position().toPoint();
+		dragStartPos = e->position().toPoint();
     }
 }
 
 void FractalWidget::mouseReleaseEvent(QMouseEvent* e) {
-	if (e->button() == Qt::RightButton && rightButtonClicked)
+	if (e->button() == Qt::RightButton)
 	{
 		selection.setBottomRight(e->position().toPoint());
-		rightButtonClicked = false;
-
 		if (selection.width() * selection.height() > 100)
 		{ // Dont zoom into very small area
 			origin = screenToReal(selection.center());
 			range = std::max(selection.width(), selection.height()) * scaleFactor() / 2;
 
 			regenerateImage();
+			selection = QRect();
 		}
 
 		update();
-	}
-	else if (e->button() == Qt::LeftButton && leftButtonClicked)
-	{
-		leftButtonClicked = false;
 	}
 }
 
 void FractalWidget::mouseMoveEvent(QMouseEvent* e)
 {
-	QPoint currentMouseLoc = e->position().toPoint();
-	if ((e->buttons() & Qt::RightButton) && rightButtonClicked)
+	QPoint currentPos = e->position().toPoint();
+	if ((e->buttons() & Qt::RightButton))
 	{
-		selection.setBottomRight(currentMouseLoc);
+		selection.setBottomRight(currentPos);
 		update();
 	}
-	else if ((e->buttons() & Qt::LeftButton) && leftButtonClicked)
+	else if ((e->buttons() & Qt::LeftButton))
 	{
-		QPoint diff = mouseDragPos - currentMouseLoc;
+		QPoint d = dragStartPos - currentPos;
 
 		double scale = 2 * range / std::min(width(), height());
-		origin.rx() += scale * diff.x();
-		origin.ry() -= scale * diff.y();
+		origin.rx() += scale * d.x();
+		origin.ry() -= scale * d.y();
 
-        mouseDragPos = currentMouseLoc; // Update position
+		dragStartPos = currentPos; // Update position
 
 		regenerateImage();
 		update();
@@ -145,6 +137,9 @@ void FractalWidget::wheelEvent(QWheelEvent* e)
 
 void FractalWidget::drawSelection(QPainter& p)
 {
+	if (selection.isNull())
+		return;
+
 	QBrush selectionBrush(QColor(100, 100, 255, 150), Qt::SolidPattern);
 	p.fillRect(selection, selectionBrush);
 }
