@@ -6,7 +6,8 @@
 
 #include "ColorPalette.h"
 
-class FractalImageCreator {
+class FractalImageCreator
+{
 public:
 	FractalImageCreator();
 
@@ -17,13 +18,8 @@ public:
 	void calculateIterationsThread(QImage& image);
 	void iterationsInRange(QImage& image, int start, int end);
 
-
 private:
-
     int nIterations = 1000;
-
-
     ColorPalette palette;
-
 };
 

@@ -54,7 +54,8 @@ QPointF FractalWidget::screenToReal(QPoint point)
 	return result;
 }
 
-void FractalWidget::paintEvent(QPaintEvent*) {
+void FractalWidget::paintEvent(QPaintEvent*)
+{
 	QPainter p(this);
 	p.setRenderHint(QPainter::SmoothPixmapTransform);
 	p.setRenderHint(QPainter::Antialiasing);
@@ -65,28 +66,28 @@ void FractalWidget::paintEvent(QPaintEvent*) {
 
 }
 
-void FractalWidget::mousePressEvent(QMouseEvent* e) {
-    QPoint position = e->position().toPoint();
-    if (e->button() == Qt::RightButton) {
+void FractalWidget::mousePressEvent(QMouseEvent* e)
+{
+	if (e->button() == Qt::RightButton)
+	{
 		rightButtonClicked = true;
-		selection.setTopLeft(position);
+		selection.setTopLeft(e->position().toPoint());
     }
-    if (e->button() == Qt::LeftButton) {
+	if (e->button() == Qt::LeftButton)
+	{
 		leftButtonClicked = true;
-        mouseDragPos = position;
-
-		qDebug() << "On screen: " << position;
-		qDebug() << "real:      " << screenToReal(position);
+		mouseDragPos = e->position().toPoint();
     }
 }
 
 void FractalWidget::mouseReleaseEvent(QMouseEvent* e) {
-	if (e->button() == Qt::RightButton && rightButtonClicked) {
+	if (e->button() == Qt::RightButton && rightButtonClicked)
+	{
 		selection.setBottomRight(e->position().toPoint());
 		rightButtonClicked = false;
 
-        
-		if (selection.width() * selection.height() > 100) { // Dont zoom into very small area
+		if (selection.width() * selection.height() > 100)
+		{ // Dont zoom into very small area
 			origin = screenToReal(selection.center());
 			range = std::max(selection.width(), selection.height()) * scaleFactor() / 2;
 
@@ -94,18 +95,23 @@ void FractalWidget::mouseReleaseEvent(QMouseEvent* e) {
 		}
 
 		update();
-
-	} else if (e->button() == Qt::LeftButton && leftButtonClicked) {
+	}
+	else if (e->button() == Qt::LeftButton && leftButtonClicked)
+	{
 		leftButtonClicked = false;
 	}
 }
 
-void FractalWidget::mouseMoveEvent(QMouseEvent* e) {
+void FractalWidget::mouseMoveEvent(QMouseEvent* e)
+{
 	QPoint currentMouseLoc = e->position().toPoint();
-	if ((e->buttons() & Qt::RightButton) && rightButtonClicked) {
+	if ((e->buttons() & Qt::RightButton) && rightButtonClicked)
+	{
 		selection.setBottomRight(currentMouseLoc);
 		update();
-	} else if ((e->buttons() & Qt::LeftButton) && leftButtonClicked) {
+	}
+	else if ((e->buttons() & Qt::LeftButton) && leftButtonClicked)
+	{
 		QPoint diff = mouseDragPos - currentMouseLoc;
 
 		double scale = 2 * range / std::min(width(), height());
@@ -119,7 +125,8 @@ void FractalWidget::mouseMoveEvent(QMouseEvent* e) {
     }
 }
 
-void FractalWidget::wheelEvent(QWheelEvent* e) {
+void FractalWidget::wheelEvent(QWheelEvent* e)
+{
     QPoint numDegrees = e->angleDelta() / 8;
 	QPoint d = e->position().toPoint() - rect().center();
 
@@ -136,14 +143,17 @@ void FractalWidget::wheelEvent(QWheelEvent* e) {
 	update();
 }
 
-void FractalWidget::drawSelection(QPainter& p) {
+void FractalWidget::drawSelection(QPainter& p)
+{
 	QBrush selectionBrush(QColor(100, 100, 255, 150), Qt::SolidPattern);
 	p.fillRect(selection, selectionBrush);
 }
 
-void FractalWidget::regenerateImage() {
+void FractalWidget::regenerateImage()
+{
 	QElapsedTimer timer;
 	timer.start();
+
 	image = fractalCreator.createImageT(QSize{ WIDTH, HEIGHT }, origin, range);
 
 	lastFrameTime = timer.elapsed();

@@ -5,8 +5,8 @@
 
 #include "FractalImageCreator.h"
 
-
-class FractalWidget : public QWidget {
+class FractalWidget : public QWidget
+{
     Q_OBJECT
 public:
 

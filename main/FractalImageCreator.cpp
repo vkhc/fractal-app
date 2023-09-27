@@ -29,15 +29,18 @@ QImage FractalImageCreator::createImage(QSize imageSize, QPointF center, double 
 
 	double step = 2 * radius / std::min(imageSize.height(), imageSize.width());
 
-	for (int i = 0; i < imageSize.width(); ++i) {
-			double x = center.x() - radius + step * i;
-		for (int j = 0; j < imageSize.height(); ++j) {
+	for (int i = 0; i < imageSize.width(); ++i)
+	{
+		double x = center.x() - radius + step * i;
+		for (int j = 0; j < imageSize.height(); ++j)
+		{
 			double y = center.y() - radius + step * j;
 
 			double zR, zI;
 			int iterations = Mandelbrot::getIterations(x,y, zR, zI, nIterations);
 			QRgb value;
-			if (iterations < 1000) {
+			if (iterations < 1000)
+			{
 				double mod = log(zR + zI) / 2;
 				double nu = log(mod / log(2)) / log(2);
 				double nIt = iterations + 1 - nu;
@@ -48,7 +51,8 @@ QImage FractalImageCreator::createImage(QSize imageSize, QPointF center, double 
 
 				value = qRgb( col.R, col.G, col.B );
 
-			} else
+			}
+			else
 				value = qRgb(0,0,0);
 
 			image.setPixel(i, j, value);
@@ -70,7 +74,8 @@ QImage FractalImageCreator::createImageT(QSize imageSize, QPointF center, double
 	int start = 0;
 	double initX = center.x() - radius;
 	double initY = center.y() - radius;
-	for (int i=0; i<nThreads; ++i) {
+	for (int i=0; i<nThreads; ++i)
+	{
 		// Pass member function to each thread
 		t[i] = std::thread(&FractalImageCreator::fillImage, this, std::ref(image), start, width, initX, initY, step);
 		start += width;
@@ -85,15 +90,18 @@ QImage FractalImageCreator::createImageT(QSize imageSize, QPointF center, double
 
 void FractalImageCreator::fillImage(QImage& image, int start, int width, double initX, double initY, double step)
 {
-	for (int i = start; i < start + width; ++i) {
-			double x = initX + step * i;
-		for (int j = 0; j < image.height(); ++j) {
+	for (int i = start; i < start + width; ++i)
+	{
+		double x = initX + step * i;
+		for (int j = 0; j < image.height(); ++j)
+		{
 			double y = initY + step * j;
 
 			double zR, zI;
 			int iterations = Mandelbrot::getIterations(x,y, zR, zI, nIterations);
 			QRgb value;
-			if (iterations < 1000) {
+			if (iterations < 1000)
+			{
 				double mod = log(zR + zI) / 2;
 				double nu = log(mod / log(2)) / log(2);
 				double nIt = iterations + 1 - nu;
@@ -103,7 +111,8 @@ void FractalImageCreator::fillImage(QImage& image, int start, int width, double 
 				RGB col = RGB::interpolate(col1, col2, 0.0f, 1.0f, fmod(nIt, 1.0));
 
 				value = qRgb( col.R, col.G, col.B );
-			} else
+			}
+			else
 				value = qRgb(0,0,0);
 
 			image.setPixel(i, image.height() - 1 - j, value);
