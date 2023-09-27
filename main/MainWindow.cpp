@@ -19,7 +19,7 @@ MainWindow::MainWindow(): w(new FractalWidget) {
     mousePosY = new QLabel("Y=0.0", this);
     fractalGenerationTime = new QLabel(this);
 
-    QString temp = QString("Image generated in %1 s").arg(w->lastFrameTime);
+	QString temp = QString("Image generated in %1 s").arg(w->lastFrameTime);
     fractalGenerationTime->setAlignment(Qt::AlignRight);
     fractalGenerationTime->setText(temp);
 
@@ -37,7 +37,7 @@ bool MainWindow::eventFilter(QObject* object, QEvent* event) {
         temp = QString("Y=%1").arg(QString::number(w->currentYCoord,'g', 16));
         mousePosY->setText(temp);
     } if (event->type() == QEvent::Paint) {
-        QString temp = QString("Image generated in %1 s ").arg(w->lastFrameTime);
+		QString temp = QString("Image generated in %1 ms ").arg(w->lastFrameTime);
         fractalGenerationTime->setText(temp);
     }
     return false;

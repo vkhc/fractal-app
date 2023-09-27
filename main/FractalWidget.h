@@ -11,9 +11,16 @@ class FractalWidget : public QWidget {
 public:
 
     FractalWidget(QWidget* parent = nullptr);
-    double currentXCoord = 0.0;
+	double currentXCoord = -0.6;
     double currentYCoord = 0.0;
+	QPointF origin;
+	double range = 1.0;
+
+
     double lastFrameTime = 0.0;
+
+	QRectF screenToReal(QRect point);
+	QPointF screenToReal(QPoint point);
 
 protected:
     void paintEvent(QPaintEvent*) override;
@@ -28,8 +35,8 @@ private:
     void redrawFractal();
     void displayCalcTime(QPainter& p);
 
-    const int WIDTH = 800;  // Order matters!
-    const int HEIGHT = 600; // Initialize scrren size before FractalImageCreator
+	const int WIDTH = 600;  // Order matters!
+	const int HEIGHT = 600; // Initialize scrren size before FractalImageCreator
     FractalImageCreator fractalCreator;
 
     bool mousePressed = false;

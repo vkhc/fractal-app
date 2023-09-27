@@ -5,7 +5,6 @@ set(SOURCES main.cpp
             FractalImageCreator.cpp
             Mandelbrot.cpp
             ColorPalette.cpp
-            Timer.h
 )
 if(WIN32)
     #add_executable(${MAIN} WIN32 ${SOURCES}) # WIN32 prevents console opening

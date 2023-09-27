@@ -3,6 +3,7 @@
 
 #include <QPainter>
 #include <QImage>
+#include <QElapsedTimer>
 #include <iostream>
 
 
@@ -13,15 +14,55 @@ FractalWidget::FractalWidget(QWidget* parent) : QWidget(parent),
     setFixedSize(WIDTH, HEIGHT);
     resetTransparentLayer();
     selectionBrush = QBrush(QColor(100, 100, 255, 150), Qt::SolidPattern);
-    redrawFractal();
+
+	redrawFractal();
+}
+
+QRectF FractalWidget::screenToReal(QRect rectR)
+{
+	QRectF result(rectR);
+	double scaleX = 2 * range / rect().width();
+	double scaleY = 2 * range / rect().height();
+
+	QPointF center = result.center();
+
+	center.rx() -= rect().width() / 2;
+	center.rx() *= scaleX;
+
+	center.ry() -= rect().height() / 2;
+	center.ry() *= (scaleY);
+
+
+	result.setWidth(result.width() * scaleX);
+	result.setHeight(result.height() * (scaleY));
+	result.moveCenter(center);
+
+	return result;
+}
+
+QPointF FractalWidget::screenToReal(QPoint point)
+{
+	QPointF result(point);
+
+	double scale = 2 * range / std::min(width(), height());
+
+	result.rx() -= rect().width() / 2;
+	result.ry() -= rect().height() / 2;
+	result.ry() *= (-1);
+	result *= scale;
+
+	result += QPointF { currentXCoord, currentYCoord };
+
+	return result;
 }
 
 void FractalWidget::paintEvent(QPaintEvent*) {
 	QPainter p(this);
 	p.setRenderHint(QPainter::SmoothPixmapTransform);
 	p.setRenderHint(QPainter::Antialiasing);
-	p.drawImage(0, 0, image);
+	p.drawImage(rect(), image);
 	p.drawImage(0, 0, transparentLayer);
+
 }
 
 void FractalWidget::mousePressEvent(QMouseEvent* e) {
@@ -32,6 +73,9 @@ void FractalWidget::mousePressEvent(QMouseEvent* e) {
     }
     if (e->button() == Qt::LeftButton) {
         mouseDragPos = position;
+
+		qDebug() << "On screen: " << position;
+		qDebug() << "real:      " << screenToReal(position);
     }
 }
 
@@ -43,43 +87,54 @@ void FractalWidget::mouseReleaseEvent(QMouseEvent* e) {
             resetTransparentLayer();
             repaint();
             mousePressed = false;
+
             return;
         }
-        fractalCreator.setDrawingArea(selectionStart.x(), selectionStart.y(),
-                                   selectionEnd.x(), selectionEnd.y());
+
+		QRect selection(selectionStart, selectionEnd);
         
         resetTransparentLayer();
-        redrawFractal();
+//		redrawFractal();
     }
+
     mousePressed = false;
 }
 
 
 void FractalWidget::mouseMoveEvent(QMouseEvent* e) {
-    QPoint currentMouseLoc = e->position().toPoint();
-    currentXCoord = fractalCreator.screenToRealX(currentMouseLoc.x());
-    currentYCoord = fractalCreator.screenToRealY(currentMouseLoc.y());
+	QPoint currentMouseLoc = e->position().toPoint();
     if ((e->buttons() & Qt::RightButton) && mousePressed) {
         selectionEnd = currentMouseLoc;
         drawSelection();
     } else if ((e->buttons() & Qt::LeftButton) && mousePressed) {
-        QPoint diff = mouseDragPos - currentMouseLoc;
+		QPoint diff = mouseDragPos - currentMouseLoc;
+
+		double scaleX = 2 * range / rect().width();
+		double scaleY = 2 * range / rect().height();
+		currentXCoord += scaleX * diff.x();
+		currentYCoord -= scaleY * diff.y();
+
         mouseDragPos = currentMouseLoc; // Update position
-        fractalCreator.moveImageCenter(diff.x(), diff.y());
+
         redrawFractal();
     }
 }
 
 void FractalWidget::wheelEvent(QWheelEvent* e) {
     QPoint numDegrees = e->angleDelta() / 8;
-    QPoint d = e->position().toPoint() - QPoint(WIDTH/2 , HEIGHT/2);
+	QPoint d = e->position().toPoint() - rect().center();
 
     float factor = 0.8f; // Magnification factor
     if (numDegrees.y() < 0) factor = 1.f / factor;
-    fractalCreator.adjustRange(factor);
-    float m = (1-factor) / factor;
-    fractalCreator.moveImageCenter(m * d.x(), m * d.y());
-    redrawFractal();
+	range *= factor;
+	float m = (1-factor) / factor;
+
+	double scaleX = 2 * range / rect().width();
+	double scaleY = 2 * range / rect().height();
+	currentXCoord += scaleX * m * d.x();
+	currentYCoord -= scaleY * m * d.y();
+
+	redrawFractal();
 }
 
 void FractalWidget::drawSelection() {
@@ -94,7 +149,11 @@ void FractalWidget::resetTransparentLayer() {
 }
 
 void FractalWidget::redrawFractal() {
-    fractalCreator.calculateIterationsThread(image);
-    lastFrameTime = fractalCreator.frameCalcTime;
+	QElapsedTimer timer;
+	timer.start();
+	image = fractalCreator.createImageT(QSize{ WIDTH, HEIGHT }, QPointF{ currentXCoord, currentYCoord }, range);
+
+
+	lastFrameTime = timer.elapsed();
     repaint();
 }
