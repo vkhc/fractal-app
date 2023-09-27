@@ -17,37 +17,14 @@ FractalWidget::FractalWidget(QWidget* parent) : QWidget(parent),
 	regenerateImage();
 }
 
-QRectF FractalWidget::screenToReal(QRect rectR)
-{
-	QRectF result(rectR);
-	double scale = 2 * range / std::min(width(), height());
-
-	QPointF center = result.center();
-
-	center.rx() -= rect().width() / 2;
-	center.rx() *= scale;
-
-	center.ry() -= rect().height() / 2;
-	center.ry() *= (scale);
-
-
-	result.setWidth(result.width() * scale);
-	result.setHeight(result.height() * (scale));
-	result.moveCenter(center);
-
-	return result;
-}
-
 QPointF FractalWidget::screenToReal(QPoint point)
 {
 	QPointF result(point);
 
-	double scale = 2 * range / std::min(width(), height());
-
 	result.rx() -= rect().width() / 2;
 	result.ry() -= rect().height() / 2;
 	result.ry() *= (-1);
-	result *= scale;
+	result *= scaleFactor();
 
 	result += origin;
 
@@ -81,8 +58,12 @@ void FractalWidget::mouseReleaseEvent(QMouseEvent* e) {
 	if (e->button() == Qt::RightButton)
 	{
 		selection.setBottomRight(e->position().toPoint());
+		if (!selection.isValid())
+			selection = selection.normalized();
+
 		if (selection.width() * selection.height() > 100)
 		{ // Dont zoom into very small area
+
 			origin = screenToReal(selection.center());
 			range = std::max(selection.width(), selection.height()) * scaleFactor() / 2;
 
@@ -100,6 +81,7 @@ void FractalWidget::mouseMoveEvent(QMouseEvent* e)
 	if ((e->buttons() & Qt::RightButton))
 	{
 		selection.setBottomRight(currentPos);
+
 		update();
 	}
 	else if ((e->buttons() & Qt::LeftButton))
@@ -149,7 +131,7 @@ void FractalWidget::regenerateImage()
 	QElapsedTimer timer;
 	timer.start();
 
-	image = fractalCreator.createImageT(QSize{ WIDTH, HEIGHT }, origin, range);
+	image = fractalCreator.createImageT(QSize{ WIDTH, HEIGHT } , origin, range);
 
 	lastFrameTime = timer.elapsed();
 }

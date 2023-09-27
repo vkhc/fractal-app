@@ -27,7 +27,6 @@ private:
 	void drawSelection(QPainter& p);
 	void regenerateImage();
 
-	QRectF screenToReal(QRect point);
 	QPointF screenToReal(QPoint point);
 
 	double scaleFactor() { return 2 * range / std::min(width(), height()); }
