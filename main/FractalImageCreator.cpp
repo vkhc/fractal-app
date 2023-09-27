@@ -1,6 +1,5 @@
 #include "FractalImageCreator.h"
 #include "Mandelbrot.h"
-#include "qdebug.h"
 
 #include <iostream>
 #include <cmath>
@@ -8,7 +7,7 @@
 
 
 
-FractalImageCreator::FractalImageCreator(int w, int h) : palette(nIterations)
+FractalImageCreator::FractalImageCreator() : palette(nIterations)
 {
     // Define colors for palete
     vector<pair<float, RGB>> colors;

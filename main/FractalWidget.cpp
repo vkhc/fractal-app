@@ -1,40 +1,38 @@
 #include "FractalWidget.h"
 
-
 #include <QPainter>
 #include <QImage>
 #include <QElapsedTimer>
 #include <iostream>
 
+constexpr int WIDTH = 600;
+constexpr int HEIGHT = 600;
 
 FractalWidget::FractalWidget(QWidget* parent) : QWidget(parent),
-                                                fractalCreator(WIDTH, HEIGHT),
-                                                image(WIDTH, HEIGHT, QImage::Format_RGB32),
-                                                transparentLayer(WIDTH, HEIGHT, QImage::Format_ARGB32) {
+												fractalCreator(),
+												image(WIDTH, HEIGHT, QImage::Format_RGB32)
+{
     setFixedSize(WIDTH, HEIGHT);
-    resetTransparentLayer();
-    selectionBrush = QBrush(QColor(100, 100, 255, 150), Qt::SolidPattern);
 
-	redrawFractal();
+	regenerateImage();
 }
 
 QRectF FractalWidget::screenToReal(QRect rectR)
 {
 	QRectF result(rectR);
-	double scaleX = 2 * range / rect().width();
-	double scaleY = 2 * range / rect().height();
+	double scale = 2 * range / std::min(width(), height());
 
 	QPointF center = result.center();
 
 	center.rx() -= rect().width() / 2;
-	center.rx() *= scaleX;
+	center.rx() *= scale;
 
 	center.ry() -= rect().height() / 2;
-	center.ry() *= (scaleY);
+	center.ry() *= (scale);
 
 
-	result.setWidth(result.width() * scaleX);
-	result.setHeight(result.height() * (scaleY));
+	result.setWidth(result.width() * scale);
+	result.setHeight(result.height() * (scale));
 	result.moveCenter(center);
 
 	return result;
@@ -51,7 +49,7 @@ QPointF FractalWidget::screenToReal(QPoint point)
 	result.ry() *= (-1);
 	result *= scale;
 
-	result += QPointF { currentXCoord, currentYCoord };
+	result += origin;
 
 	return result;
 }
@@ -61,17 +59,20 @@ void FractalWidget::paintEvent(QPaintEvent*) {
 	p.setRenderHint(QPainter::SmoothPixmapTransform);
 	p.setRenderHint(QPainter::Antialiasing);
 	p.drawImage(rect(), image);
-	p.drawImage(0, 0, transparentLayer);
+
+	if (rightButtonClicked)
+		drawSelection(p);
 
 }
 
 void FractalWidget::mousePressEvent(QMouseEvent* e) {
-    mousePressed = true;
     QPoint position = e->position().toPoint();
     if (e->button() == Qt::RightButton) {
-        selectionStart = position;
+		rightButtonClicked = true;
+		selection.setTopLeft(position);
     }
     if (e->button() == Qt::LeftButton) {
+		leftButtonClicked = true;
         mouseDragPos = position;
 
 		qDebug() << "On screen: " << position;
@@ -80,43 +81,41 @@ void FractalWidget::mousePressEvent(QMouseEvent* e) {
 }
 
 void FractalWidget::mouseReleaseEvent(QMouseEvent* e) {
-    if (e->button() == Qt::RightButton && mousePressed) {
-        selectionEnd = e->position().toPoint();
-        QPoint diff = selectionEnd - selectionStart;
-        if (std::abs(diff.x()) < 5 || std::abs(diff.y()) < 5) { // Dont zoom into very small area
-            resetTransparentLayer();
-            repaint();
-            mousePressed = false;
+	if (e->button() == Qt::RightButton && rightButtonClicked) {
+		selection.setBottomRight(e->position().toPoint());
+		rightButtonClicked = false;
 
-            return;
-        }
-
-		QRect selection(selectionStart, selectionEnd);
         
-        resetTransparentLayer();
-//		redrawFractal();
-    }
+		if (selection.width() * selection.height() > 100) { // Dont zoom into very small area
+			origin = screenToReal(selection.center());
+			range = std::max(selection.width(), selection.height()) * scaleFactor() / 2;
 
-    mousePressed = false;
+			regenerateImage();
+		}
+
+		update();
+
+	} else if (e->button() == Qt::LeftButton && leftButtonClicked) {
+		leftButtonClicked = false;
+	}
 }
-
 
 void FractalWidget::mouseMoveEvent(QMouseEvent* e) {
 	QPoint currentMouseLoc = e->position().toPoint();
-    if ((e->buttons() & Qt::RightButton) && mousePressed) {
-        selectionEnd = currentMouseLoc;
-        drawSelection();
-    } else if ((e->buttons() & Qt::LeftButton) && mousePressed) {
+	if ((e->buttons() & Qt::RightButton) && rightButtonClicked) {
+		selection.setBottomRight(currentMouseLoc);
+		update();
+	} else if ((e->buttons() & Qt::LeftButton) && leftButtonClicked) {
 		QPoint diff = mouseDragPos - currentMouseLoc;
 
-		double scaleX = 2 * range / rect().width();
-		double scaleY = 2 * range / rect().height();
-		currentXCoord += scaleX * diff.x();
-		currentYCoord -= scaleY * diff.y();
+		double scale = 2 * range / std::min(width(), height());
+		origin.rx() += scale * diff.x();
+		origin.ry() -= scale * diff.y();
 
         mouseDragPos = currentMouseLoc; // Update position
 
-        redrawFractal();
+		regenerateImage();
+		update();
     }
 }
 
@@ -129,31 +128,23 @@ void FractalWidget::wheelEvent(QWheelEvent* e) {
 	range *= factor;
 	float m = (1-factor) / factor;
 
-	double scaleX = 2 * range / rect().width();
-	double scaleY = 2 * range / rect().height();
-	currentXCoord += scaleX * m * d.x();
-	currentYCoord -= scaleY * m * d.y();
+	double scale = 2 * range / std::min(width(), height());
+	origin.rx() += scale * m * d.x();
+	origin.ry() -= scale * m * d.y();
 
-	redrawFractal();
+	regenerateImage();
+	update();
 }
 
-void FractalWidget::drawSelection() {
-    resetTransparentLayer();
-    QPainter painter(&transparentLayer);
-    painter.fillRect(QRect(selectionStart, selectionEnd), selectionBrush);
-    update();
+void FractalWidget::drawSelection(QPainter& p) {
+	QBrush selectionBrush(QColor(100, 100, 255, 150), Qt::SolidPattern);
+	p.fillRect(selection, selectionBrush);
 }
 
-void FractalWidget::resetTransparentLayer() {
-    transparentLayer.fill(QColor(0,0,0,0));
-}
-
-void FractalWidget::redrawFractal() {
+void FractalWidget::regenerateImage() {
 	QElapsedTimer timer;
 	timer.start();
-	image = fractalCreator.createImageT(QSize{ WIDTH, HEIGHT }, QPointF{ currentXCoord, currentYCoord }, range);
-
+	image = fractalCreator.createImageT(QSize{ WIDTH, HEIGHT }, origin, range);
 
 	lastFrameTime = timer.elapsed();
-    repaint();
 }

@@ -11,16 +11,10 @@ class FractalWidget : public QWidget {
 public:
 
     FractalWidget(QWidget* parent = nullptr);
-	double currentXCoord = -0.6;
-    double currentYCoord = 0.0;
-	QPointF origin;
+	QPointF origin = { -0.6, 0.0 };
 	double range = 1.0;
 
-
-    double lastFrameTime = 0.0;
-
-	QRectF screenToReal(QRect point);
-	QPointF screenToReal(QPoint point);
+	double lastFrameTime = 0.0;
 
 protected:
     void paintEvent(QPaintEvent*) override;
@@ -30,21 +24,21 @@ protected:
     void wheelEvent(QWheelEvent* e) override;
 
 private:
-    void drawSelection();
-    void resetTransparentLayer();
-    void redrawFractal();
-    void displayCalcTime(QPainter& p);
+	void drawSelection(QPainter& p);
+	void regenerateImage();
 
-	const int WIDTH = 600;  // Order matters!
-	const int HEIGHT = 600; // Initialize scrren size before FractalImageCreator
-    FractalImageCreator fractalCreator;
+	QRectF screenToReal(QRect point);
+	QPointF screenToReal(QPoint point);
 
-    bool mousePressed = false;
+	double scaleFactor() { return 2 * range / std::min(width(), height()); }
 
-    QImage image;            // Fractal is drawn here
-    QImage transparentLayer; // Transparent layer to draw selection rectange
-    QPoint selectionStart;
-    QPoint selectionEnd;
+private:
+	FractalImageCreator fractalCreator;
+
+	bool leftButtonClicked = false;
+	bool rightButtonClicked = false;
+
+	QImage image;
+	QRect selection;
     QPoint mouseDragPos;
-    QBrush selectionBrush;   // Brush for selection rectangle
 };

@@ -8,7 +8,7 @@
 
 class FractalImageCreator {
 public:
-	FractalImageCreator(int w, int h);
+	FractalImageCreator();
 
 	QImage createImage(QSize imageSize, QPointF center, double radius);
 	QImage createImageT(QSize imageSize, QPointF center, double radius);
