@@ -5,4 +5,5 @@ build/*
 # Ignore
 .vscode
 .vs
+CMakeLists.txt.user
 out/
