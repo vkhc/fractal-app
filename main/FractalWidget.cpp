@@ -131,14 +131,14 @@ void FractalWidget::regenerateImage()
 	QElapsedTimer timer;
 	timer.start();
 
-	double m = 4;
+	double m = 0.5;
 	int w = WIDTH / m;
 	int h = HEIGHT / m;
 
 //	image = fractalCreator.createImageT(QSize{ w, h }, origin, range);
 
-	auto imgBuff = fractalCreator.createImageT(w, h, origin.x(), origin.y(), range);
-	image = QImage((uchar*)imgBuff.release(), w, h, QImage::Format_RGB32);
+	auto imgBuff = fractalCreator.createImageT(w, h, origin.x(), origin.y(), range).release();
+	image = QImage((uchar*)imgBuff, w, h, QImage::Format_RGB32, [](void* info) { delete[] (uint32_t*)info; }, imgBuff);
 
 	lastFrameTime = timer.elapsed();
 }

@@ -65,21 +65,19 @@ QImage FractalImageCreator::createImageT(QSize imageSize, QPointF center, double
 	double initX = center.x() - radius;
 	double initY = center.y() - radius;
 
-//	std::vector<std::thread> t(nThreads);                   // Initialize thread array
-//	for (int i=0; i<nThreads; ++i)
-//	{
-//		if (start + width > imageSize.width())
-//		{
-//			width = imageSize.width() - start;
-//		}
-//		// Pass member function to each thread
-//		t[i] = std::thread(&FractalImageCreator::fillImage, this, std::ref(image), start, width, initX, initY, step);
-//		start += width;
-//	}
-//	// Join all threads with main
-//	for (int i=0; i<nThreads;  ++i) t[i].join();
-
-	fillImage(image, start, imageSize.width(), initX, initY, step);
+	std::vector<std::thread> t(nThreads);                   // Initialize thread array
+	for (int i=0; i<nThreads; ++i)
+	{
+		if (start + width > imageSize.width())
+		{
+			width = imageSize.width() - start;
+		}
+		// Pass member function to each thread
+		t[i] = std::thread(&FractalImageCreator::fillImage, this, std::ref(image), start, width, initX, initY, step);
+		start += width;
+	}
+	// Join all threads with main
+	for (int i=0; i<nThreads;  ++i) t[i].join();
 
 	return image;
 }
@@ -114,33 +112,40 @@ std::unique_ptr<uint32_t[]> FractalImageCreator::createImageT(int W, int H, doub
 {
 	auto image = std::make_unique<uint32_t[]>(W * H);
 
-	double step = 2 * radius / std::min(W, H);
 	// FIXME: Use proper division not to get underflow in the end frame
-#if Threads
-	int nThreads = 2;// std::thread::hardware_concurrency();     // Get max thread number
+#if Threads || 1
+	int nThreads = 30;// std::thread::hardware_concurrency();     // Get max thread number
 	std::vector<std::thread> t(nThreads);                   // Initialize thread array
 	int height_t = std::ceil((double)H / nThreads);
 
+	double topLeftX = cX - radius;
+	double topLeftY = cY - radius;
+
+	double step = 2 * radius / std::min(W, H);
 	int start = 0;
-	double initX = cX - radius;
-	double initY = cY - radius;
 	for (int i=0; i<nThreads; ++i)
 	{
 		if (start + height_t > H)
 		{
 			height_t = H - start;
 		}
+
+		double initX = topLeftX;
+		double initY = topLeftY + 2*radius * start / H;
+
 		// Pass member function to each thread
-		t[i] = std::thread(&FractalImageCreator::fillImage, this, std::ref(image), start, height_t, initX, initY, step);
+		t[i] = std::thread(&FractalImageCreator::fillImageB2, this, image.get()+ W*start, W, height_t, initX, initY, step);
 		start += height_t;
 	}
 	// Join all threads with main
 	for (int i=0; i<nThreads;  ++i) t[i].join();
 #elif old_way ||0
+	double step = 2 * radius / std::min(W, H);
 	double initX = cX - radius;
 	double initY = cY - radius;
 	fillImageB(image.get() + W*H-W, W, H, initX, initY, step);
 #else
+	double step = 2 * radius / std::min(W, H);
 	double initX = cX - radius;
 	double initY = cY - radius;
 	fillImageB2(image.get(), W, H, initX, initY, step);
@@ -203,7 +208,8 @@ void FractalImageCreator::fillImageB2(uint32_t* buffer, int width, int height, d
 			else
 				value = qRgb(0,0,0);
 
-			*(pos - width * j + i) = value; // invert y
+//			*(pos - width * j + i) = value; // invert y
+			*(buffer + width * j + i) = value; // invert y
 		}
 	}
 }
