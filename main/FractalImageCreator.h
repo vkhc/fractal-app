@@ -16,6 +16,7 @@ public:
 
 	void fillImage(QImage& image, int start, int width, double initX, double initY, double step);
 	void fillImageB(uint32_t* buffer, int height, int width, double initX, double initY, double radius);
+	void fillImageB2(uint32_t* buffer, int width, int height, double initX, double initY, double radius);
 
 private:
 	RGB colorFrom(int iterations, double zR, double zI);

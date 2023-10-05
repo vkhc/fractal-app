@@ -135,7 +135,7 @@ void FractalWidget::regenerateImage()
 	int w = WIDTH / m;
 	int h = HEIGHT / m;
 
-//	image = fractalCreator.createImageT(QSize{ w, h } * 2 , origin, range);
+//	image = fractalCreator.createImageT(QSize{ w, h }, origin, range);
 
 	auto imgBuff = fractalCreator.createImageT(w, h, origin.x(), origin.y(), range);
 	image = QImage((uchar*)imgBuff.release(), w, h, QImage::Format_RGB32);
