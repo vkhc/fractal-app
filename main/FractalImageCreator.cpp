@@ -1,10 +1,11 @@
 #include "FractalImageCreator.h"
 #include "Mandelbrot.h"
-#include "qdebug.h"
 
 #include <iostream>
 #include <cmath>
 #include <thread>
+
+#define INVERT_Y
 
 RGB FractalImageCreator::colorFrom(int iterations, double zR, double zI)
 {
@@ -36,7 +37,7 @@ std::vector<std::pair<int, int>> intervals(int range, int divisor)
 	return result;
 }
 
-FractalImageCreator::FractalImageCreator() : palette(nIterations)
+FractalImageCreator::FractalImageCreator(int width, int height) : m_width(width), m_height(height), m_buffer(std::make_unique<uint32_t[]>(width*height)), palette(nIterations)
 {
     // Define colors for palete
     vector<pair<float, RGB>> colors;
@@ -52,142 +53,44 @@ FractalImageCreator::FractalImageCreator() : palette(nIterations)
 	palette.init(colors);
 }
 
-QImage FractalImageCreator::createImageT(QSize imageSize, QPointF center, double radius)
+uint32_t* FractalImageCreator::createImageRaw(double cX, double cY, double radius)
 {
-	QImage image(imageSize, QImage::Format_RGB32);
-
-	double step = 2 * radius / std::min(imageSize.height(), imageSize.width());
-	// FIXME: Use proper division not to get underflow in the end frame
-	int nThreads = 30;// std::thread::hardware_concurrency();     // Get max thread number
-	int width = std::ceil((double)imageSize.width() / nThreads);
-
-	int start = 0;
-	double initX = center.x() - radius;
-	double initY = center.y() - radius;
-
+	int nThreads = 60;// std::thread::hardware_concurrency();     // Get max thread number
 	std::vector<std::thread> t(nThreads);                   // Initialize thread array
-	for (int i=0; i<nThreads; ++i)
-	{
-		if (start + width > imageSize.width())
-		{
-			width = imageSize.width() - start;
-		}
-		// Pass member function to each thread
-		t[i] = std::thread(&FractalImageCreator::fillImage, this, std::ref(image), start, width, initX, initY, step);
-		start += width;
-	}
-	// Join all threads with main
-	for (int i=0; i<nThreads;  ++i) t[i].join();
-
-	return image;
-}
-
-void FractalImageCreator::fillImage(QImage& image, int start, int width, double initX, double initY, double step)
-{
-	for (int i = start; i < start + width; ++i)
-	{
-		double x = initX + step * i;
-		for (int j = 0; j < image.height(); ++j)
-		{
-			double y = initY + step * j;
-
-			double zR, zI;
-			int iterations = Mandelbrot::getIterations(x,y, zR, zI, nIterations);
-			QRgb value;
-			if (iterations < 1000)
-			{
-				auto col = colorFrom(iterations, zR, zI);
-
-				value = qRgb( col.R, col.G, col.B );
-			}
-			else
-				value = qRgb(0,0,0);
-
-			image.setPixel(i, image.height() - 1 - j, value);
-		}
-	}
-}
-
-std::unique_ptr<uint32_t[]> FractalImageCreator::createImageT(int W, int H, double cX, double cY, double radius)
-{
-	auto image = std::make_unique<uint32_t[]>(W * H);
-
-	// FIXME: Use proper division not to get underflow in the end frame
-#if Threads || 1
-	int nThreads = 30;// std::thread::hardware_concurrency();     // Get max thread number
-	std::vector<std::thread> t(nThreads);                   // Initialize thread array
-	int height_t = std::ceil((double)H / nThreads);
+	int height_t = std::ceil((double)m_height / nThreads);
 
 	double topLeftX = cX - radius;
 	double topLeftY = cY - radius;
 
-	double step = 2 * radius / std::min(W, H);
+	double step = 2 * radius / std::min(m_width, m_height);
 	int start = 0;
 	for (int i=0; i<nThreads; ++i)
 	{
-		if (start + height_t > H)
+		if (start + height_t > m_height)
 		{
-			height_t = H - start;
+			height_t = m_height - start;
 		}
 
 		double initX = topLeftX;
-		double initY = topLeftY + 2*radius * start / H;
+		double initY = topLeftY + 2*radius * start / m_height;
 
 		// Pass member function to each thread
-		t[i] = std::thread(&FractalImageCreator::fillImageB2, this, image.get()+ W*start, W, height_t, initX, initY, step);
+#ifdef INVERT_Y
+		t[i] = std::thread(&FractalImageCreator::fillImage, this, m_buffer.get()+ m_width*(m_height - start - 1), m_width, height_t, initX, initY, step);
+#else
+		t[i] = std::thread(&FractalImageCreator::fillImage, this, m_buffer.get()+ m_width*start, m_width, height_t, initX, initY, step);
+#endif
 		start += height_t;
 	}
 	// Join all threads with main
 	for (int i=0; i<nThreads;  ++i) t[i].join();
-#elif old_way ||0
-	double step = 2 * radius / std::min(W, H);
-	double initX = cX - radius;
-	double initY = cY - radius;
-	fillImageB(image.get() + W*H-W, W, H, initX, initY, step);
-#else
-	double step = 2 * radius / std::min(W, H);
-	double initX = cX - radius;
-	double initY = cY - radius;
-	fillImageB2(image.get(), W, H, initX, initY, step);
-#endif
 
-	return std::move(image);
+	return m_buffer.get();
 }
 
-void FractalImageCreator::fillImageB(uint32_t* buffer, int width, int height, double initX, double initY, double step)
-{
-	for (int i = 0; i < width; ++i)
-	{
-		double X = initX + step * i;
-		for (int j = 0; j < height; ++j)
-		{
-			double Y = initY + step * j;
-
-			double zR, zI;
-			int iterations = Mandelbrot::getIterations(X, Y, zR, zI, nIterations);
-			QRgb value;
-			if (iterations < 1000)
-			{
-				auto col = colorFrom(iterations, zR, zI);
-
-				value = qRgb( col.R, col.G, col.B );
-			}
-			else
-				value = qRgb(0,0,0);
-
-			if (Y > 0)
-				value = qRgb(255,0,0);
-
-			*(buffer - width * j + i) = value;
-		}
-	}
-}
-
-void FractalImageCreator::fillImageB2(uint32_t* buffer, int width, int height, double initX, double initY, double step)
+void FractalImageCreator::fillImage(uint32_t* buffer, int width, int height, double initX, double initY, double step)
 {
 //	double step = 2 * radius / std::min(width, height);
-
-	uint32_t* pos = buffer + (width - 1) * height; // invert y
 
 	for (int j = 0; j < height; ++j)
 	{
@@ -198,18 +101,21 @@ void FractalImageCreator::fillImageB2(uint32_t* buffer, int width, int height, d
 
 			double zR, zI;
 			int iterations = Mandelbrot::getIterations(X, Y, zR, zI, nIterations);
-			QRgb value;
+			uint32_t value;
 			if (iterations < 1000)
 			{
 				auto col = colorFrom(iterations, zR, zI);
 
-				value = qRgb( col.R, col.G, col.B );
+				value = packRGB( col.R, col.G, col.B );
 			}
 			else
-				value = qRgb(0,0,0);
+				value = packRGB(0,0,0);
 
-//			*(pos - width * j + i) = value; // invert y
+#ifdef INVERT_Y
+			*(buffer - width * j + i) = value; // invert y
+#else
 			*(buffer + width * j + i) = value; // invert y
+#endif
 		}
 	}
 }

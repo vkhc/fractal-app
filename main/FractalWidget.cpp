@@ -5,14 +5,15 @@
 #include <QElapsedTimer>
 #include <iostream>
 
-constexpr int WIDTH = 600;
-constexpr int HEIGHT = 600;
+constexpr double mul = 2;
+constexpr int WIDTH = 600 / mul;
+constexpr int HEIGHT = 600 / mul;
 
 FractalWidget::FractalWidget(QWidget* parent) : QWidget(parent),
-												fractalCreator(),
+												fractalCreator(WIDTH, HEIGHT),
 												image(WIDTH, HEIGHT, QImage::Format_RGB32)
 {
-    setFixedSize(WIDTH, HEIGHT);
+	setFixedSize(WIDTH * mul, HEIGHT * mul);
 
 	regenerateImage();
 }
@@ -131,14 +132,9 @@ void FractalWidget::regenerateImage()
 	QElapsedTimer timer;
 	timer.start();
 
-	double m = 0.5;
-	int w = WIDTH / m;
-	int h = HEIGHT / m;
+	auto buff = fractalCreator.createImageRaw(origin.x(), origin.y(), range);
+	image = QImage((uchar*)buff, WIDTH, HEIGHT, QImage::Format_RGB32);
 
-//	image = fractalCreator.createImageT(QSize{ w, h }, origin, range);
-
-	auto imgBuff = fractalCreator.createImageT(w, h, origin.x(), origin.y(), range).release();
-	image = QImage((uchar*)imgBuff, w, h, QImage::Format_RGB32, [](void* info) { delete[] (uint32_t*)info; }, imgBuff);
 
 	lastFrameTime = timer.elapsed();
 }

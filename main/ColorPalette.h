@@ -26,3 +26,8 @@ public:
     void init(vector<pair<float, RGB>>& vals);
     inline RGB& operator[] (int i) {return colorPalete[i]; }
 };
+
+inline constexpr uint32_t packRGB(int r, int g, int b, int a = 255)
+{
+	return ((a & 0xffu) << 24) | ((r & 0xffu) << 16) | ((g & 0xffu) << 8) | (b & 0xffu);
+}
