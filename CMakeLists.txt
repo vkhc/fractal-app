@@ -22,11 +22,13 @@ list(APPEND CMAKE_PREFIX_PATH ${QT_CONFIG_PATH})
 
 # Find required Qt libraries
 find_package(Qt6 REQUIRED COMPONENTS Widgets
-                                     Gui)
+                                     Gui
+                                     Concurrent)
 
 # set(CMAKE_EXE_LINKER_FLAGS -no-pie) # Without this wont run as exe on linux 
 
 
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/thread_pool)
+add_subdirectory(${PROJECT_SOURCE_DIR}/utils)
 add_subdirectory(${PROJECT_SOURCE_DIR}/main)

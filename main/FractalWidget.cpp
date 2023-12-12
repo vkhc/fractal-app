@@ -5,7 +5,7 @@
 #include <QElapsedTimer>
 #include <iostream>
 
-constexpr double mul = 2;
+constexpr double mul = 4;
 constexpr int WIDTH = 600 / mul;
 constexpr int HEIGHT = 600 / mul;
 
@@ -38,13 +38,15 @@ void FractalWidget::paintEvent(QPaintEvent*)
 	p.setRenderHint(QPainter::SmoothPixmapTransform);
 	p.setRenderHint(QPainter::Antialiasing);
 
-	drawSelection(p);
-
 	// invert coordinate system
 	p.translate(rect().bottomLeft());
 	p.scale(1.0, -1.0);
-	p.drawImage(rect(), image);
 
+	p.drawImage(rect(), image);
+	// back to normal
+	p.resetTransform();
+
+	drawSelection(p);
 }
 
 void FractalWidget::mousePressEvent(QMouseEvent* e)

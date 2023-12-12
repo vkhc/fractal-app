@@ -14,7 +14,9 @@ else()
 endif()
 
 target_link_libraries(${MAIN}
-    thread_pool        
+    thread_pool
+    utils
     Qt6::Widgets
     Qt6::Gui
+    Qt6::Concurrent
 )
