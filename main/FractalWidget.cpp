@@ -37,9 +37,13 @@ void FractalWidget::paintEvent(QPaintEvent*)
 	QPainter p(this);
 	p.setRenderHint(QPainter::SmoothPixmapTransform);
 	p.setRenderHint(QPainter::Antialiasing);
-	p.drawImage(rect(), image);
 
 	drawSelection(p);
+
+	// invert coordinate system
+	p.translate(rect().bottomLeft());
+	p.scale(1.0, -1.0);
+	p.drawImage(rect(), image);
 
 }
 

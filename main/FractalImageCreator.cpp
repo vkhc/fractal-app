@@ -1,11 +1,35 @@
 #include "FractalImageCreator.h"
+
 #include "Mandelbrot.h"
+
 
 #include <iostream>
 #include <cmath>
 #include <thread>
+#include <future>
 
-#define INVERT_Y
+#define INVERT_Y 0
+
+static void wait_for_all(std::vector<std::future<void>>& futures)
+{
+    size_t count = futures.size();
+
+    while (count > 0)
+    {
+        for (auto& f : futures)
+        {
+            if (!f.valid())
+                continue;
+
+            if (f.wait_for(std::chrono::seconds::zero()) == std::future_status::ready)
+            {
+                --count;
+
+                f.get();
+            }
+        }
+    }
+}
 
 RGB FractalImageCreator::colorFrom(int iterations, double zR, double zI)
 {
@@ -19,6 +43,32 @@ RGB FractalImageCreator::colorFrom(int iterations, double zR, double zI)
 
 	return col;
 }
+
+// void _fillImage(uint32_t* buffer, int width, int height, double initX, double initY, double step, int nIterations = 1000)
+// {
+// 	for (int j = 0; j < height; ++j)
+// 	{
+// 		double Y = initY + step * j;
+// 		for (int i = 0; i < width; ++i)
+// 		{
+// 			double X = initX + step * i;
+
+// 			double zR, zI;
+// 			int iterations = Mandelbrot::getIterations(X, Y, zR, zI, nIterations);
+// 			uint32_t value;
+// 			if (iterations < 1000)
+// 			{
+// 				auto col = colorFrom(iterations, zR, zI);
+
+// 				value = packRGB( col.R, col.G, col.B );
+// 			}
+// 			else
+// 				value = packRGB(0,0,0);
+
+// 			*(buffer + width * j + i) = value;
+// 		}
+// 	}
+// }
 
 std::vector<std::pair<int, int>> intervals(int range, int divisor)
 {
@@ -37,7 +87,7 @@ std::vector<std::pair<int, int>> intervals(int range, int divisor)
 	return result;
 }
 
-FractalImageCreator::FractalImageCreator(int width, int height) : m_width(width), m_height(height), m_buffer(std::make_unique<uint32_t[]>(width*height)), palette(nIterations)
+FractalImageCreator::FractalImageCreator(int width, int height) : m_width(width), m_height(height), m_buffer(std::make_unique<uint32_t[]>(width*height)), palette(nIterations), pool(TPool::instance())
 {
     // Define colors for palete
     vector<pair<float, RGB>> colors;
@@ -55,7 +105,38 @@ FractalImageCreator::FractalImageCreator(int width, int height) : m_width(width)
 
 uint32_t* FractalImageCreator::createImageRaw(double cX, double cY, double radius)
 {
-	int nThreads = 60;// std::thread::hardware_concurrency();     // Get max thread number
+#if USE_POOL || 0
+	int nTasks = 30;
+	std::vector<std::future<void>> tasks;
+	tasks.reserve(nTasks);
+
+	int height_t = std::ceil((double)m_height / nTasks);
+
+	double topLeftX = cX - radius;
+	double topLeftY = cY - radius;
+
+	double step = 2 * radius / std::min(m_width, m_height);
+	int start = 0;
+	for (int i=0; i<nTasks; ++i)
+	{
+		if (start + height_t > m_height)
+		{
+			height_t = m_height - start;
+		}
+
+		double initX = topLeftX;
+		double initY = topLeftY + 2*radius * start / m_height;
+
+		auto mf = std::bind(&FractalImageCreator::fillImage, this, m_buffer.get()+ m_width*start, m_width, height_t, initX, initY, step);
+		tasks.emplace_back(pool.async(mf));
+
+		start += height_t;
+	}
+
+	wait_for_all(tasks);
+
+#else
+	int nThreads = 30;// std::thread::hardware_concurrency();     // Get max thread number
 	std::vector<std::thread> t(nThreads);                   // Initialize thread array
 	int height_t = std::ceil((double)m_height / nThreads);
 
@@ -75,7 +156,7 @@ uint32_t* FractalImageCreator::createImageRaw(double cX, double cY, double radiu
 		double initY = topLeftY + 2*radius * start / m_height;
 
 		// Pass member function to each thread
-#ifdef INVERT_Y
+#if INVERT_Y
 		t[i] = std::thread(&FractalImageCreator::fillImage, this, m_buffer.get()+ m_width*(m_height - start - 1), m_width, height_t, initX, initY, step);
 #else
 		t[i] = std::thread(&FractalImageCreator::fillImage, this, m_buffer.get()+ m_width*start, m_width, height_t, initX, initY, step);
@@ -84,14 +165,13 @@ uint32_t* FractalImageCreator::createImageRaw(double cX, double cY, double radiu
 	}
 	// Join all threads with main
 	for (int i=0; i<nThreads;  ++i) t[i].join();
+#endif
 
 	return m_buffer.get();
 }
 
 void FractalImageCreator::fillImage(uint32_t* buffer, int width, int height, double initX, double initY, double step)
 {
-//	double step = 2 * radius / std::min(width, height);
-
 	for (int j = 0; j < height; ++j)
 	{
 		double Y = initY + step * j;
@@ -111,10 +191,10 @@ void FractalImageCreator::fillImage(uint32_t* buffer, int width, int height, dou
 			else
 				value = packRGB(0,0,0);
 
-#ifdef INVERT_Y
+#if INVERT_Y
 			*(buffer - width * j + i) = value; // invert y
 #else
-			*(buffer + width * j + i) = value; // invert y
+			*(buffer + width * j + i) = value;
 #endif
 		}
 	}

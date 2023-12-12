@@ -2,6 +2,7 @@
 
 #include <memory>
 
+#include "thread_pool.h"
 #include "ColorPalette.h"
 
 class FractalImageCreator
@@ -22,5 +23,6 @@ private:
 	std::unique_ptr<uint32_t[]> m_buffer;
     int nIterations = 1000;
     ColorPalette palette;
+	TPool& pool;
 };
 

@@ -13,5 +13,8 @@ else()
     add_executable(${MAIN} ${SOURCES})
 endif()
 
-target_link_libraries(${MAIN} Qt6::Widgets
-                  )
+target_link_libraries(${MAIN}
+    thread_pool        
+    Qt6::Widgets
+    Qt6::Gui
+)
