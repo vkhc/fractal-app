@@ -26,13 +26,26 @@ public:
 
         m_ready.notify_all();
     }
-    bool try_pop(std::function<void()>& task)
+
+    bool pop(task_t& task)
     {
         lock_t lock(m_mutex);
         while (m_queue.empty() && !m_done)
             m_ready.wait(lock);
 
         if (m_queue.empty())
+            return false;
+
+        task = std::move(m_queue.front());
+        m_queue.pop_front();
+
+        return true;
+    }
+
+    bool try_pop(task_t& task)
+    {
+        lock_t lock(m_mutex, std::try_to_lock);
+        if (!lock || m_queue.empty())
             return false;
 
         task = std::move(m_queue.front());
@@ -52,9 +65,25 @@ public:
         m_ready.notify_one();
     }
 
+    template<typename F>
+    bool try_push(F&& task)
+    {
+        {
+            lock_t lock(m_mutex, std::try_to_lock);
+            if (!lock)
+                return false;
+
+            m_queue.emplace_back(std::forward<F>(task));
+        }
+
+        m_ready.notify_one();
+
+        return true;
+    }
+
 
 private:
-    std::deque<std::function<void()>> m_queue;
+    std::deque<task_t> m_queue;
     std::condition_variable m_ready;
     std::mutex m_mutex;
     bool m_done = false;
@@ -71,7 +100,14 @@ public:
     void async_(F&& f)
     {
         auto i = m_index++;
-        m_queues[i % m_threads.size()].push(std::forward<F>(f));
+
+        for (size_t n = 0; n < m_count; ++n)
+        {
+            if (m_queues[(i + n) % m_count].try_push(f))
+                return;
+        }
+
+        m_queues[i % m_count].push(std::forward<F>(f));
     }
 
     template<typename Task, typename... Args, typename R = std::invoke_result_t<Task, Args...>>
@@ -83,7 +119,7 @@ public:
             if constexpr (std::is_void_v<R>)
             {
                 task(args...);
-
+                // TODO: exception handling
                 promise->set_value();
             }
             else
@@ -103,7 +139,8 @@ private:
     void run(unsigned i);
 
 private:
+    size_t m_count;
     std::vector<std::jthread> m_threads;
     std::vector<task_queue> m_queues;
-    std::atomic<unsigned> m_index = 0;
+    std::atomic<unsigned> m_index;
 };

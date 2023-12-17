@@ -43,7 +43,12 @@ std::vector<std::pair<int, int>> intervals(int range, int divisor)
 	return result;
 }
 
-FractalImageCreator::FractalImageCreator(int width, int height) : m_width(width), m_height(height), m_buffer(std::make_unique<uint32_t[]>(width*height)), palette(nIterations), pool(TPool::instance())
+FractalImageCreator::FractalImageCreator(int width, int height) :
+	m_width(width),
+	m_height(height),
+	m_buffer(std::make_unique<uint32_t[]>(width*height)),
+	palette(nIterations),
+	pool(TPool::instance())
 {
     // Define colors for palete
     vector<pair<float, RGB>> colors;
@@ -65,10 +70,9 @@ uint32_t* FractalImageCreator::createImageRaw(double cX, double cY, double radiu
 
 	int chunk_height = std::ceil((double)m_height / nTasks);
 
+	double step = 2 * radius / std::min(m_width, m_height);
 	double bottomLeftX = cX - radius;
 	double bottomLeftY = cY - radius;
-
-	double step = 2 * radius / std::min(m_width, m_height);
 
 	int start = 0;
 

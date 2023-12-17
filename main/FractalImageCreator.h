@@ -10,6 +10,7 @@ class FractalImageCreator
 public:
 	FractalImageCreator(int width, int height);
 
+	/* */
 	uint32_t* createImageRaw(double cX, double cY, double radius);
 
 	void fillImage(uint32_t* buffer, int width, int height, double initX, double initY, double radius);

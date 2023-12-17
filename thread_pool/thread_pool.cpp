@@ -8,12 +8,11 @@ TPool& TPool::instance()
     return pool;
 }
 
-TPool::TPool()
+TPool::TPool() : m_count(std::thread::hardware_concurrency()), m_index(0)
 {
-    unsigned int count = std::thread::hardware_concurrency();
-    m_queues = std::vector<task_queue>(count);
-    m_threads.reserve(count);
-    for (int n = 0; n < count; ++n)
+    m_queues = std::vector<task_queue>(m_count);
+    m_threads.reserve(m_count);
+    for (int n = 0; n < m_count; ++n)
     {
         m_threads.emplace_back([this, n]{ run(n); });
     }
@@ -31,7 +30,13 @@ void TPool::run(unsigned i)
     {
         std::function<void()> f;
 
-        if (!m_queues[i].try_pop(f))
+        for (size_t n = 0; n < m_count; ++n)
+        {
+            if (m_queues[(i + n) % m_count].try_pop(f))
+                break;
+        }
+
+        if (!f && !m_queues[i].pop(f))
             break;
 
         f();
