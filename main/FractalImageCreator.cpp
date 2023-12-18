@@ -19,28 +19,11 @@ RGB FractalImageCreator::colorFrom(int iterations, double zR, double zI)
 	double nu = log(mod / log(2)) / log(2);
 	double nIt = iterations + 1 - nu;
 
-	RGB col1 = palette[nIt];
-	RGB col2 = palette[nIt+1];
+	RGB col1 = palette[(int)nIt];
+	RGB col2 = palette[(int)nIt+1];
 	RGB col = RGB::interpolate(col1, col2, 0.0f, 1.0f, fmod(nIt, 1.0));
 
 	return col;
-}
-
-std::vector<std::pair<int, int>> intervals(int range, int divisor)
-{
-	int step = std::ceil((double)range / divisor);
-
-	std::vector<std::pair<int, int>> result;
-	for (int start = 0; start < range; start += step)
-	{
-		int end = start + step;
-		if (end > range)
-			end = range - start;
-
-		result.emplace_back(start, end);
-	}
-
-	return result;
 }
 
 FractalImageCreator::FractalImageCreator(int width, int height) :
@@ -66,32 +49,20 @@ FractalImageCreator::FractalImageCreator(int width, int height) :
 
 uint32_t* FractalImageCreator::createImageRaw(double cX, double cY, double radius)
 {
-	int nTasks = 40;
-
-	int chunk_height = std::ceil((double)m_height / nTasks);
-
 	double step = 2 * radius / std::min(m_width, m_height);
 	double bottomLeftX = cX - radius;
 	double bottomLeftY = cY - radius;
 
-	int start = 0;
+	std::vector<std::future<void>> tasks;
+	tasks.reserve(m_height); // Compute every row concurrently
 
-	std::vector<std::future<void>> tasks(nTasks);
-	for (auto& task : tasks)
+	for (int row = 0; row < m_height; ++row)
 	{
-		if (start + chunk_height > m_height) // trim the last chunk if it goes beyond image
-		{
-			chunk_height = m_height - start;
-		}
-
 		double initX = bottomLeftX;
-		double initY = bottomLeftY + 2 * radius * start / m_height;
-		uint32_t* point_in_buffer = m_buffer.get() + m_width * start;
+		double initY = bottomLeftY + step * row;
 
-		auto packaged_task = std::bind(&FractalImageCreator::fillImage, this, point_in_buffer, m_width, chunk_height, initX, initY, step);
-		task = pool.async(packaged_task);
-
-		start += chunk_height;
+		auto packaged_task = std::bind(&FractalImageCreator::fillRow, this, row, initX, initY, step);
+		tasks.emplace_back(pool.async(packaged_task));
 	}
 
 	wait_for_all(tasks);
@@ -99,28 +70,24 @@ uint32_t* FractalImageCreator::createImageRaw(double cX, double cY, double radiu
 	return m_buffer.get();
 }
 
-void FractalImageCreator::fillImage(uint32_t* buffer, int width, int height, double initX, double initY, double step)
+void FractalImageCreator::fillRow(int row_n, double initX, double initY, double step)
 {
-	for (int j = 0; j < height; ++j)
+	double Y = initY;
+	for (int i = 0; i < m_width; ++i)
 	{
-		double Y = initY + step * j;
-		for (int i = 0; i < width; ++i)
+		double X = initX + step * i;
+
+		auto [iterations, zR, zI] = Mandelbrot::getIterations(X, Y, nIterations);
+		uint32_t value;
+		if (iterations < nIterations)
 		{
-			double X = initX + step * i;
+			auto col = colorFrom(iterations, zR, zI);
 
-			double zR, zI;
-			int iterations = Mandelbrot::getIterations(X, Y, zR, zI, nIterations);
-			uint32_t value;
-			if (iterations < 1000)
-			{
-				auto col = colorFrom(iterations, zR, zI);
-
-				value = packRGB( col.R, col.G, col.B );
-			}
-			else
-				value = packRGB(0,0,0);
-
-			*(buffer + width * j + i) = value;
+			value = packRGB( col.R, col.G, col.B );
 		}
+		else
+			value = packRGB(0,0,0);
+
+		*(m_buffer.get() + m_width * row_n + i) = value;
 	}
 }

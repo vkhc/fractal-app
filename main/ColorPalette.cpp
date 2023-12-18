@@ -4,11 +4,12 @@
 
 using mypair = std::pair<float, RGB>;
 
- RGB RGB::interpolate(RGB& low, RGB& high, float lpos, float hpos, float t) {
-    float i = (t - lpos) / (hpos - lpos);
+ RGB RGB::interpolate(RGB& low, RGB& high, double lpos, double hpos, double t) {
+    double i = (t - lpos) / (hpos - lpos);
     RGB result = {uint8_t((high.R - low.R)*i + low.R),
                   uint8_t((high.G - low.G)*i + low.G),
                   uint8_t((high.B - low.B)*i + low.B)};
+                  
     return result;
 }
 

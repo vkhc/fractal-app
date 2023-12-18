@@ -14,7 +14,7 @@ struct RGB {
     uint8_t G;
     uint8_t B;
 
-    static RGB interpolate(RGB& low, RGB& high, float lpos, float hpos, float t);
+    static RGB interpolate(RGB& low, RGB& high, double lpos, double hpos, double t);
 };
 
 class ColorPalette {

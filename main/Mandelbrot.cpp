@@ -1,8 +1,6 @@
 #include "Mandelbrot.h"
 
-
-
-int Mandelbrot::getIterations(double x0, double y0, double& escZr, double& escZi, int MAX_ITERATIONS) {
+Mandelbrot::Result Mandelbrot::getIterations(double x0, double y0, int MAX_ITERATIONS) {
     double x, y, x2, y2;
     x = y = x2 = y2 = 0;
 
@@ -18,7 +16,6 @@ int Mandelbrot::getIterations(double x0, double y0, double& escZr, double& escZi
 
         ++iterations;
     }
-    escZr = x2;
-    escZi = y2;
-    return iterations;
+    
+    return { iterations, x2, y2 };
 }
