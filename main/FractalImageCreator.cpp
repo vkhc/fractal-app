@@ -31,7 +31,7 @@ FractalImageCreator::FractalImageCreator(int width, int height) :
 	m_height(height),
 	m_buffer(std::make_unique<uint32_t[]>(width*height)),
 	palette(nIterations),
-	pool(TPool::instance())
+	pool(thread_pool::instance())
 {
     // Define colors for palete
     vector<pair<float, RGB>> colors;

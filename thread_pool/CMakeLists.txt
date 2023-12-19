@@ -5,6 +5,7 @@ set(TARGET
 
 set(SOURCES
     thread_pool.h thread_pool.cpp
+    task_queue.h task_queue.cpp
 )
 
 add_library(${TARGET} STATIC ${SOURCES})

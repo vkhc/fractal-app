@@ -1,30 +1,29 @@
 #include "thread_pool.h"
 
 
-TPool& TPool::instance()
+thread_pool& thread_pool::instance()
 {
-    static TPool pool;
+    static thread_pool pool;
 
     return pool;
 }
 
-TPool::TPool() : m_count(std::thread::hardware_concurrency()), m_index(0)
+thread_pool::thread_pool() : m_count(std::thread::hardware_concurrency()), m_threads(m_count), m_queues(m_count), m_index(0)
 {
-    m_queues = std::vector<task_queue>(m_count);
-    m_threads.reserve(m_count);
+
     for (int n = 0; n < m_count; ++n)
     {
-        m_threads.emplace_back([this, n]{ run(n); });
+        m_threads[n] = std::jthread([this, n]{ run(n); });
     }
 }
 
-TPool::~TPool()
+thread_pool::~thread_pool()
 {
     for (auto& q : m_queues)
         q.done();
 }
 
-void TPool::run(unsigned i)
+void thread_pool::run(unsigned i)
 {
     while (true)
     {

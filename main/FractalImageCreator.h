@@ -23,6 +23,6 @@ private:
 	std::unique_ptr<uint32_t[]> m_buffer;
     int nIterations = 1000;
     ColorPalette palette;
-	TPool& pool;
+	thread_pool& pool;
 };
 
